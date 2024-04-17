@@ -1,0 +1,133 @@
+{% load extras %}
+<input type="hidden" name="action" value="{{ action }}">
+<input type="hidden" name="id" value="{{ id }}">
+{% for field in form %}
+    {% if field.field.widget.attrs.separator %}
+        {% if field.field.widget.attrs.blanklinebefore %}
+        {% endif %}
+        <div style="width: 100%; height: max-content">
+            <h6 style="width:100%; text-align:left; border-bottom: 1px solid #98a3ab; line-height:0.1em; margin:10px 0 20px;">
+                <span style="padding:0 10px; background: #f5f5f5;">
+                    {% if field.field.widget.attrs.separatortitle %}
+                        {{ field.field.widget.attrs.separatortitle }}
+                    {% endif %}
+                 </span>
+            </h6>
+        </div>
+    {% endif %}
+    <div id="fieldset_{{ field.name }}" class="col-lg-{% if field.field.widget.attrs.col %}{{ field.field.widget.attrs.col }}{% else %}12{% endif %}" style="float: left; padding-right: 10px;">
+        <label class="control-label pr-2" for="id_{{ field.name }}">
+            <b>{{ field.label }}&nbsp;:</b>
+        </label>
+         <div style="width:{% if not field.field.widget.attrs.controlwidth %}100%{% else %}{{ field.field.widget.attrs.controlwidth }}{% endif %};">
+            {% if field.field.widget.attrs.select2search %}
+                <select id="id_{{ field.name }}_select2" style="width: 100%"
+                        {% if field.field.widget.attrs.disabled %}disabled=""{% endif %}>
+                    <option value="0" selected="selected">---------</option>
+                </select>
+                <input name="{{ field.name }}" id="id_{{ field.name }}" value="{{ field.value }}"
+                       hidden="hidden"
+                       type="hidden"
+                       {% if field.field.widget.attrs.descripcion %}descripcion="{{ field.field.widget.attrs.descripcion }}"{% endif %}
+                       class="select2hidden">
+            {% elif field.name == 'archivo' %}
+                <input type="file" name="{{ field.name }}" {% if filtro.archivo %}data-default-file="/media/{{ filtro.archivo }}" value="/media/{{ filtro.archivo }}"{% endif %}
+                       class="form-control" id="id_{{ field.name }}" data-allowed-file-extensions="jpg png jpeg">
+                {% if filtro.archivo %}
+                    <a href="/media/{{ filtro.archivo }}" target="_blank"><i class="fa fa-download"></i>
+                        {{ filtro.archivo }}</a>
+                {% endif %}
+            {% else %}
+                {{ field }}
+            {% endif %}
+        </div>
+        <p class="help-text">{{ field.help_text }} </p>
+    </div>
+{% endfor %}
+<script>
+    $(function () {
+        $('select').select2({width: '100%', dropdownParent: $('#itemspanel')});
+        $("#id_nacimiento").datepicker({format: "dd-mm-yyyy"}).on('changeDate', function (ev) {
+            $(this).datepicker('hide');
+        });
+        $('#id_pais').change(function () {
+            $('#id_provincia, #id_ciudad').empty().append('<option value="">---------</option>').val(0).trigger("change");
+            var control = $(this);
+            var id = parseInt($("#id_pais").val());
+            if (id > 0) {
+                bloquearpantalla();
+                $.ajax({
+                    type: "POST",
+                    url: "/consulta",
+                    data: {'a': 'provincias', 'id': id, csrfmiddlewaretoken: '{{ csrf_token }}'},
+                    success: function (data) {
+                        $.unblockUI();
+                        console.log(data)
+                        if (data.result == 'ok') {
+                            for (elemento in data.lista) {
+                                $('#id_provincia').append('<option value="' + data.lista[elemento][0] + '">' + data.lista[elemento][1] + '</option>');
+                            }
+                        } else {
+                            control.val(0).trigger("change");
+                            Swal.fire(data.mensaje);
+                        }
+                    },
+                    error: function () {
+                        $.unblockUI();
+                        control.val(0).trigger("change");
+                        Swal.fire("Error de conexion.");
+                    },
+                    dataType: "json"
+                });
+            }
+        });
+
+        $('#id_provincia').change(function () {
+            $('#id_ciudad').empty().append('<option value="">---------</option>').val(0).trigger("change");
+            var control = $(this);
+            var id = parseInt($("#id_provincia").val());
+            if (id > 0) {
+                bloquearpantalla();
+                $.ajax({
+                    type: "POST",
+                    url: "/consulta",
+                    data: {'a': 'ciudades', 'id': id, csrfmiddlewaretoken: '{{ csrf_token }}'},
+                    success: function (data) {
+                        $.unblockUI();
+                        if (data.result == 'ok') {
+                            for (elemento in data.lista) {
+                                $('#id_ciudad').append('<option value="' + data.lista[elemento][0] + '">' + data.lista[elemento][1] + '</option>');
+                            }
+                        } else {
+                            control.val(0).trigger("change");
+                            Swal.fire(data.mensaje);
+                        }
+                    },
+                    error: function () {
+                        $.unblockUI();
+                        control.val(0).trigger("change");
+                        Swal.fire("Error de conexion.");
+                    },
+                    dataType: "json"
+                });
+            }
+        });
+
+        $("#id_identificacion").blur(function () {
+            var num = $(this).val();
+            $("#id_password").val(num);
+        });
+        $("#id_username").blur(function () {
+            var username = $(this).val();
+            if (username != "") {
+                $.get("/vendedor", {'action': 'consulta_usuario', 'username': username}, function (data) {
+                    if (data.result == 'novalido') {
+                        $(this).val("");
+                        Swal.fire("El usuario ya existe, intente con otro por favor.");
+                    }
+
+                }, 'json');
+            }
+        });
+    });
+</script>

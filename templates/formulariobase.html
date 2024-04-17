@@ -1,0 +1,229 @@
+{% extends "index.html" %}
+{% block cabecera %}
+    <link type='text/css' rel='stylesheet' href="/static/css/validationEngine.jquery.css?v=1.0.0"/>
+    <script type="text/javascript" src='/static/js/jquery.validationEngine.js?v=1.0.0'></script>
+    <script type="text/javascript" src='/static/js/jquery.validationEngine-es.js?v=1.0.0'></script>
+    <script type="text/javascript">
+        $(function () {
+            {% block javascript %}
+            {% endblock %}
+
+            $("#form").validationEngine({autoHidePrompt: true, autoHideDelay: 1000});
+            envioformulario = function () {
+                var valid = $("form").validationEngine('validate');
+                {% block validaciones %}
+                {% endblock %}
+                if (valid) {
+                    $('.datepicker').css({"display": "none"});
+                    $('.bootstrap-timepicker-widget').css({"display": "none"});
+                    $('.controls input').each(function () {
+                        if ($(this).attr('type') == 'text') {
+                            $(this).val($(this).val().trim());
+                        }
+                        if ($(this).attr('type') != 'file') {
+                            if ($(this).css('text-transform') == 'uppercase') {
+                                if ($(this).attr('type') != 'password') {
+                                    $(this).val($(this).val().toUpperCase());
+                                }
+                            }
+                        }
+                    });
+
+                    var formdata = new FormData($("#formulario")[0]);
+                    formdata.append("csrfmiddlewaretoken", '{{ csrf_token }}');
+                    try {
+                        formdata.append("lista_items1", JSON.stringify(lista_items1));
+                    } catch (err) {
+                        console.log(err.message);
+                    }
+                    bloquearpantalla();
+                    $.ajax({
+                        type: "POST",
+                        url: "{% block accionformulario %}/{% endblock %}",
+                        data: formdata,
+                        success: function (data) {
+                            $.unblockUI();
+                            if (data.result == 'ok') {
+                                location.href = "{% block destinoformulario %}{% endblock %}" + ((data.id) ? data.id : "");
+                            } else {
+                                Swal.fire(data.mensaje);
+                                {% block errorsuccess %}
+                                {% endblock %}
+                            }
+                        },
+                        error: function () {
+                            $.unblockUI();
+                            {% block errorajax %}
+                            {% endblock %}
+                            Swal.fire("Error al enviar los datos.");
+                        },
+                        cache: false,
+                        contentType: false,
+                        processData: false
+                    });
+                } else {
+                    setTimeout(function () {
+                        $('.help-text').each(function () {
+                            var field = $(this);
+                            if (field.attr('alert')) {
+                                field.html(field.attr('alert'));
+                            } else {
+                                field.html('');
+                            }
+                        });
+                    }, 8000);
+                }
+            };
+
+            $("#botonguardar").click(function () {
+                envioformulario();
+            });
+
+            tipo_formulario($("#formulario"));
+
+            $(".select2hidden").each(function () {
+                var id = $(this).attr("id");
+                $("#" + id + "_select2").html('<option>' + $(this).attr("descripcion") + '</option>').trigger('change');
+            })
+
+            numerico = function(elemento, min, max, decimales) {
+                var nvalor;
+                var valor = elemento.val();
+                if (valor==""){
+                    valor = parseFloat(0).toFixed(decimales);
+                    elemento.val(valor);
+                    return;
+                }
+                if (isNaN(valor)){
+                    nvalor = parseFloat(min).toFixed(decimales);
+                    elemento.val(nvalor);
+                    return;
+                }
+                if (valor < min) {
+                    nvalor = parseFloat(min).toFixed(decimales);
+                    elemento.val(nvalor);
+                    return;
+                }
+                if (max>0 && valor>max){
+                    nvalor = parseFloat(max).toFixed(decimales);
+                    elemento.val(nvalor);
+                    return;
+                }
+                nvalor = parseFloat(valor).toFixed(decimales);
+                elemento.val(nvalor);
+            };
+        });
+        $(document).ready(function () {
+            $('.validarclave').keyup(function () {
+                var pswd = $(this).val();
+                var habilitar = true;
+                if (pswd.length < 8) {
+                    $('#length').removeClass('valid').addClass('invalid');
+                    habilitar = false;
+                } else {
+                    $('#length').removeClass('invalid').addClass('valid');
+                }
+                if (pswd.match(/[A-z]/)) {
+                    $('#letter').removeClass('invalid').addClass('valid');
+                } else {
+                    habilitar = false;
+                    $('#letter').removeClass('valid').addClass('invalid');
+                }
+                if (pswd.match(/[A-Z]/) && pswd.match(/[a-z]/)) {
+                    $('#capital').removeClass('invalid').addClass('valid');
+                } else {
+                    habilitar = false;
+                    $('#capital').removeClass('valid').addClass('invalid');
+                }
+                if (pswd.match(/\d/)) {
+                    $('#number').removeClass('invalid').addClass('valid');
+                } else {
+                    habilitar = false;
+                    $('#number').removeClass('valid').addClass('invalid');
+                }
+                if ($("#id_nueva").val().toLowerCase() != $("#id_anterior").val().toLowerCase()) {
+                    $('#igualdad').removeClass('invalid').addClass('valid');
+                } else {
+                    habilitar = false;
+                    $('#igualdad').removeClass('valid').addClass('invalid');
+                }
+                if ($("#id_nueva").val() == $("#id_repetir").val()) {
+                    $('#nuevarepetir').removeClass('invalid').addClass('valid');
+                } else {
+                    habilitar = false;
+                    $('#nuevarepetir').removeClass('valid').addClass('invalid');
+                }
+                if (habilitar) {
+                    $("#botonguardar").show();
+                } else {
+                    $("#botonguardar").hide();
+                }
+            });
+        });
+    </script>
+{% endblock %}
+{% block atras-titulo %}
+    <div class="section-header-back">
+        <div class="row">
+            <div class="col-1">
+                <a href="/grupos" class="btn btn-light btn-icon-split">
+                        <span class="icon text-white-50">
+                            <i class="fas fa-arrow-left"></i>
+                        </span>
+                </a>
+            </div>
+            <div class="col-11">
+                <h6 class="m-0 font-weight-bold text-primary">{{ title }}</h6>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block cuerpo %}
+    {% block mensajes_formulario %}{% endblock %}
+    <form id="formulario" {% block formtagextra %}{% endblock %} formtype="{% block form-type %}form-horizontal{% endblock %}" onsubmit="return false">
+        <div class="card-body">
+            <div class="form-row font-small">
+                {% block elementosextra %}
+                {% endblock %}
+                {% for field in form %}
+                    {% if field.field.widget.attrs.check %}
+                        <div class="d-flex justify-content-center align-items-end form-group {% if field.field.widget.attrs.width_control %}{{ field.field.widget.attrs.width_control }}{% endif %}">
+                            <div class="form-check">
+                                <input type="checkbox" id="id_{{ field.name }}" name="id_{{ field.name }}" value="{{ field.value }}" class="form-check-input" checked="true">
+                                <label for="id_{{ field.name }}"> {{ field.label }} </label>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="form-group {% if field.field.widget.attrs.width_control %}{{ field.field.widget.attrs.width_control }}{% endif %}">
+                            <label for="id_{{ field.name }}">{{ field.label }}</label>
+                            {% if field.field.widget.attrs.select2search %}
+                                <select id="id_{{ field.name }}_select2" {% if field.field.widget.attrs.disabled %}disabled=""{% endif %}>
+                                    <option value="0" selected="selected">---------</option>
+                                </select>
+                                <input name="{{ field.name }}" id="id_{{ field.name }}" value="{% if field.field.widget.attrs.value %}{{ field.field.widget.attrs.value }}{% else %}{{ field.value }}{% endif %}" hidden="hidden"
+                                        {% if field.field.widget.attrs.descripcion %} descripcion="{{ field.field.widget.attrs.descripcion }}"{% endif %} class="select2hidden">
+                            {% else %}
+                                {{ field }}
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                {% block formsuffix %}
+                {% endblock %}
+            </div>
+        </div>
+
+        <div class="card-footer text-right">
+            <a href="javascript:;" class="btn btn-success btn-form" id="botonguardar">
+                <i class="fas fa-save"></i> {% block nombreboton %}Guardar{% endblock %}
+            </a>
+            <a href="{% block cancelar %}/{% endblock %}" class="btn btn-danger">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
+        </div>
+        <div class="row-fluid">
+            {% block formadicional %}
+            {% endblock %}
+        </div>
+    </form>
+{% endblock %}

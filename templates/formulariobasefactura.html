@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+{% load extras %}
+<html lang="en">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Clases</title>
+
+    <!-- Custom fonts for this template-->
+    <link href="/static/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link
+            href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
+            rel="stylesheet">
+
+    <!-- Custom styles for this template-->
+    <link href="/static/css/sb-admin-2.min.css" rel="stylesheet">
+    <!-- Bootstrap core JavaScript-->
+    <script src="/static/js/jquery/jquery.min.js"></script>
+    <script src="/static/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Core plugin JavaScript-->
+    <script src="/static/jquery-easing/jquery.easing.min.js"></script>
+
+    <!-- Custom scripts for all pages-->
+    <script src="/static/js/sb-admin-2.min.js"></script>
+    {#    <script type='text/javascript' src='/static/js/jquery.dataTables.min.js?4.0.0'></script>#}
+    <script src="/static/js/datatables/jquery.dataTables.min.js"></script>
+    <script src="/static/js/datatables/dataTables.bootstrap4.min.js"></script>
+    <link href="/static/sweet2/sweetalert2.css?2.0.3" rel="stylesheet"/>
+    <script src="/static/sweet2/sweetalert2.js?1.0.1"></script>
+    <script type='text/javascript' src="/static/js/jquery.blockUI.js?v=2.71.0"></script>
+    <script type='text/javascript' src="/static/js/sysend.js?4.0.0"></script>
+    <script type="text/javascript" src="/static/js/select2.js?v=1.0.0"></script>
+    <link type="text/css" rel="stylesheet" href="/static/css/select2.css?v=1.1.3">
+    <link href="/static/css/datepicker.css?1.0.0" rel='stylesheet'/>
+    <script type='text/javascript' src="/static/js/bootstrap-datepicker.js?1.0.0"></script>
+    <link type='text/css' rel='stylesheet' href="/static/css/validationEngine.jquery.css?v=1.0.0"/>
+    <script type="text/javascript" src='/static/js/jquery.validationEngine.js?v=1.0.0'></script>
+    <script type="text/javascript" src='/static/js/jquery.validationEngine-es.js?v=1.0.0'></script>
+    <script type="text/javascript">
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        var csrftoken = getCookie('csrftoken');
+
+        function csrfSafeMethod(method) {
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+
+        $.ajaxSetup({
+            beforeSend: function (xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        $(function () {
+            tipo_formulario = function (elemento) {
+                if (elemento.attr('formtype') == 'form-vertical') {
+                    elemento.find(".control-label").css({'float': 'none'});
+                    elemento.find(".label-text").css({'text-align': 'left'});
+                    elemento.find(".control-label").each(function () {
+                        var contenedor = parseFloat($(this).parent().css('width')) - 5;
+                        $(this).css({'width': contenedor.toString() + 'px'});
+                    });
+                    elemento.find(".control").each(function () {
+                        var contenedor = parseFloat($(this).parent().css('width')) - 5;
+                        $(this).css({'width': contenedor.toString() + 'px'});
+                    });
+
+                } else {
+                    elemento.find(".control-label").css({'float': 'left'});
+                    elemento.find(".label-text").css({'text-align': 'right'});
+                    if (elemento.hasClass('form-modal')) {
+                        elemento.find(".control-group").each(function () {
+                            var contenedor = parseFloat($(this).parent().width());
+                            var porciento = (parseFloat($(this).width()) / 100);
+                            var tam = parseInt(contenedor * porciento);
+                            $(this).css({'width': tam});
+                        });
+                    }
+                    elemento.find(".control-label").each(function () {
+                        if ($(this).attr('labelwidth')) {
+                            $(this).css({'width': $(this).attr('labelwidth')});
+                        } else {
+                            $(this).css({'width': '160px'});
+                        }
+                    });
+                    elemento.find(".control").each(function () {
+                        var contenedor = $(this).parent().width();
+                        var label = parseFloat($(this).parent().find('.control-label').width());
+                        $(this).css({'width': ((contenedor - label) - 20).toString() + 'px'});
+                    });
+                }
+            };
+            bloquearpantalla = function () {
+                if (!$(".blockUI").length) {
+                    $.blockUI({
+                        message: $('#throbber'),
+                        css: {
+                            backgroundColor: 'transparent',
+                            border: '0',
+                            zIndex: 9999999
+                        },
+                        overlayCSS: {
+                            backgroundColor: '#fff',
+                            opacity: 0.8,
+                            zIndex: 9999990
+                        }
+                    });
+                }
+            };
+            $(".btn-form").click(function () {
+                bloquearpantalla();
+            });
+
+            $(".bloqueo_pantalla").click(function () {
+                bloquearpantalla();
+            });
+
+            $("#form").validationEngine({autoHidePrompt: true, autoHideDelay: 1000});
+
+            envioformulario = function () {
+                var valid = $("form").validationEngine('validate');
+                {% block validaciones %}
+                {% endblock %}
+                if (valid) {
+                    $('.datepicker').css({"display": "none"});
+                    $('.bootstrap-timepicker-widget').css({"display": "none"});
+                    $('.controls input').each(function () {
+                        if ($(this).attr('type') == 'text') {
+                            $(this).val($(this).val().trim());
+                        }
+                        if ($(this).attr('type') != 'file') {
+                            if ($(this).css('text-transform') == 'uppercase') {
+                                if ($(this).attr('type') != 'password') {
+                                    $(this).val($(this).val().toUpperCase());
+                                }
+                            }
+                        }
+                    });
+
+                    var formdata = new FormData($("#formulario")[0]);
+                    formdata.append("csrfmiddlewaretoken", '{{ csrf_token }}');
+                    try {
+                        formdata.append("lista_items1", JSON.stringify(lista_items1));
+                    } catch (err) {
+                        console.log(err.message);
+                    }
+                    try {
+                        formdata.append("lista_items2", JSON.stringify(lista_items2));
+                    } catch (err) {
+                        console.log(err.message);
+                    }
+                    try {
+                        formdata.append("lista_forma_pago", JSON.stringify(lista_forma_pago));
+                    } catch (err) {
+                        console.log(err.message);
+                    }
+                    try {
+                        formdata.append("cambio", parseFloat($('.cambio_factura').text()));
+                    } catch (err) {
+                        console.log(err.message);
+                    }
+                    try {
+                        formdata.append("efectivorecibido", parseFloat($('#valor_efectivo').val()));
+                    } catch (err) {
+                        console.log(err.message);
+                    }
+                    $.ajax({
+                        type: "POST",
+                        url: "{% block accionformulario %}/{% endblock %}",
+                        data: formdata,
+                        success: function (data) {
+                            $('#botonguardar').removeClass('btn-progress disabled')
+                            if (data.result == 'ok') {
+                                location.href = "{% block destinoformulario %}{% endblock %}" + ((data.id) ? data.id : "");
+                            } else {
+                                Swal.fire(data.mensaje);
+                                {% block errorsuccess %}
+                                {% endblock %}
+                            }
+                        },
+                        error: function () {
+                            $.unblockUI();
+                            $('#botonguardar').removeClass('btn-progress disabled')
+                            {% block errorajax %}
+                            {% endblock %}
+                            Swal.fire("Error al enviar los datos.");
+                        },
+                        complete: function () {
+                            $.unblockUI();
+                        },
+                        cache: false,
+                        contentType: false,
+                        processData: false
+                    });
+                } else {
+                    setTimeout(function () {
+                        $('.help-text').each(function () {
+                            var field = $(this);
+                            if (field.attr('alert')) {
+                                field.html(field.attr('alert'));
+                            } else {
+                                field.html('');
+                            }
+                        });
+                    }, 8000);
+                    $('#botonguardar').removeClass('btn-progress disabled')
+                }
+            };
+
+            $("#botonguardar").click(function (event) {
+                event.preventDefault();
+                $(this).addClass('btn-progress disabled');
+                bloquearpantalla();
+                envioformulario();
+            });
+
+            tipo_formulario($("#formulario"));
+
+            $(".select2hidden").each(function () {
+                var id = $(this).attr("id");
+                $("#" + id + "_select2").html('<option>' + $(this).attr("descripcion") + '</option>').trigger('change');
+            })
+        });
+        $(document).ready(function () {
+            $('.validarclave').keyup(function () {
+                var pswd = $(this).val();
+                var habilitar = true;
+                if (pswd.length < 8) {
+                    $('#length').removeClass('valid').addClass('invalid');
+                    habilitar = false;
+                } else {
+                    $('#length').removeClass('invalid').addClass('valid');
+                }
+                if (pswd.match(/[A-z]/)) {
+                    $('#letter').removeClass('invalid').addClass('valid');
+                } else {
+                    habilitar = false;
+                    $('#letter').removeClass('valid').addClass('invalid');
+                }
+                if (pswd.match(/[A-Z]/) && pswd.match(/[a-z]/)) {
+                    $('#capital').removeClass('invalid').addClass('valid');
+                } else {
+                    habilitar = false;
+                    $('#capital').removeClass('valid').addClass('invalid');
+                }
+                if (pswd.match(/\d/)) {
+                    $('#number').removeClass('invalid').addClass('valid');
+                } else {
+                    habilitar = false;
+                    $('#number').removeClass('valid').addClass('invalid');
+                }
+                if ($("#id_nueva").val().toLowerCase() != $("#id_anterior").val().toLowerCase()) {
+                    $('#igualdad').removeClass('invalid').addClass('valid');
+                } else {
+                    habilitar = false;
+                    $('#igualdad').removeClass('valid').addClass('invalid');
+                }
+                if ($("#id_nueva").val() == $("#id_repetir").val()) {
+                    $('#nuevarepetir').removeClass('invalid').addClass('valid');
+                } else {
+                    habilitar = false;
+                    $('#nuevarepetir').removeClass('valid').addClass('invalid');
+                }
+                if (habilitar) {
+                    $("#botonguardar").show();
+                } else {
+                    $("#botonguardar").hide();
+                }
+            });
+        });
+    </script>
+    {% block extrascabecera %}
+    {% endblock %}
+</head>
+
+<body id="page-top">
+
+<!-- Page Wrapper -->
+<div id="wrapper">
+
+    <!-- End of Sidebar -->
+
+    <!-- Content Wrapper -->
+    <div id="content-wrapper" class="d-flex flex-column">
+
+        <!-- Main Content -->
+        <div id="content">
+
+            <!-- Topbar -->
+            <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+                <!-- Sidebar Toggle (Topbar) -->
+                <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                    <i class="fa fa-bars"></i>
+                </button>
+
+
+                <!-- Topbar Navbar -->
+                <ul class="navbar-nav ml-auto">
+
+                    <!-- Nav Item - Search Dropdown (Visible Only XS) -->
+                    <li class="nav-item dropdown no-arrow d-sm-none">
+                        <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button"
+                           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <!-- Dropdown - Messages -->
+                        <div class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in"
+                             aria-labelledby="searchDropdown">
+                            <form class="form-inline mr-auto w-100 navbar-search">
+                                <div class="input-group">
+                                    <input type="text" class="form-control bg-light border-0 small"
+                                           placeholder="Search for..." aria-label="Search"
+                                           aria-describedby="basic-addon2">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-primary" type="button">
+                                            <i class="fas fa-search fa-sm"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </li>
+                    <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+                        <form
+                                class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
+                            <div class="input-group">
+                                <select class="multi-option form-control" id="id_sucursal" >
+                                    {% for sucursal in sucursales %}
+                                        <option {% if sucursal.id == sucursalsesion.id %} selected {% endif %}
+                                                                                          value="{{ sucursal.id }}">{{ sucursal }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </form>
+                    </nav>
+
+                    <div class="topbar-divider d-none d-sm-block"></div>
+
+                    <!-- Nav Item - User Information -->
+                    <li class="nav-item dropdown no-arrow">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span class="mr-2 d-none d-lg-inline text-gray-600 small">Douglas McGee</span>
+                            <img class="img-profile rounded-circle"
+                                 src="img/undraw_profile.svg">
+                        </a>
+                        <!-- Dropdown - User Information -->
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
+                             aria-labelledby="userDropdown">
+                            <a class="dropdown-item" href="#">
+                                <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                                Perfil
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="/logout" >
+                                <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                                Salir
+                            </a>
+                        </div>
+                    </li>
+
+                </ul>
+
+            </nav>
+            <!-- End of Topbar -->
+
+            <!-- Begin Page Content -->
+            <div class="container-fluid">
+
+                <!-- Content Row -->
+
+                <div class="row">
+
+                    <!-- Area Chart -->
+                    <div class="col-xl-12 col-lg-12">
+                        {% block atras-titulo %}
+                        {% endblock %}
+                        <div class="card shadow mb-4">
+                            <div class="card-body">
+                                <form id="formulario" formtype="form-horizontal" onsubmit="return false">
+                                    <div class="card-body">
+                                        <div class="row justify-content-center">
+                                            <div class="col-12 col-sm-12 col-lg-8">
+                                                <div class="form-row font-small">
+                                                    {% block elementosextra %}
+                                                    {% endblock %}
+                                                    {% for field in form %}
+                                                        {% if field.field.widget.attrs.select2search %}
+                                                            <div class="form-group
+
+
+
+
+
+
+
+
+                                                {% if field.field.widget.attrs.width_control %}{{ field.field.widget.attrs.width_control }}{% endif %}">
+                                                                <label for="id_{{ field.name }}">{{ field.label }}</label>
+                                                                <select id="id_{{ field.name }}_select2"
+                                                                        {% if field.field.widget.attrs.disabled %}disabled=""{% endif %}>
+                                                                    <option value="0" selected="selected">---------</option>
+                                                                </select>
+                                                                <input name="{{ field.name }}" id="id_{{ field.name }}" value="
+
+
+
+
+
+
+
+
+                                                    {% if field.field.widget.attrs.value %}{{ field.field.widget.attrs.value }}{% else %}{{ field.value }}{% endif %}"
+                                                                       hidden="hidden"
+                                                                       {% if field.field.widget.attrs.descripcion %}descripcion="{{ field.field.widget.attrs.descripcion }}"{% endif %}
+                                                                       class="select2hidden">
+                                                            </div>
+                                                        {% else %}
+                                                            <div class="form-group
+
+
+
+
+
+
+
+
+                                                {% if field.field.widget.attrs.width_control %}{{ field.field.widget.attrs.width_control }}{% endif %}">
+                                                                <label for="id_{{ field.name }}">  {{ field.label }}</label>
+                                                                {{ field }}
+                                                            </div>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                    {% block formsuffix %}
+                                                    {% endblock %}
+                                                </div>
+                                            </div>
+                                            <div class="col-12 col-sm-12 col-lg-4 d-flex align-items-center justify-content-center">
+                                                <div class="container">
+                                                    <div class="row totales">
+                                                        <div class="col-sm-12 col-md-12 col-12 total bg-light text-center mb-2">
+                                                            <h3 class="font-weight-bold ">$ <span id="total_factura">000</span></h3>
+                                                            <p>Total a Pagar</p>
+                                                        </div>
+                                                        <div class="col-sm-3 col-12 subtotales">
+                                                            <span class="font-weight-bold">$ <span id="subtotal_doce">000</span></span>
+                                                            <p>Subtotal Iva</p>
+                                                        </div>
+                                                        <div class="col-sm-3 col-12 subtotales">
+                                                            <span class="font-weight-bold">$ <span id="subtotal_cero">000</span></span>
+                                                            <p>Subtotal 0</p>
+                                                        </div>
+                                                        <div class="col-sm-3 col-12 subtotales">
+                                                            <span class="font-weight-bold">$ <span id="impuesto_factura">000</span></span>
+                                                            <p>Impuestos</p>
+                                                        </div>
+                                                        <div class="col-sm-3 col-12 subtotales">
+                                                            -
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            {% block formdetail %}
+                                            {% endblock %}
+                                        </div>
+                                    </div>
+                                    {#                <div class="card-footer text-right">#}
+                                    {#                    <a href="javascript:;" class="btn btn-success btn-form" id="botonguardar">#}
+                                    {#                        <i class="fas fa-save"></i> {% block nombreboton %}Guardar{% endblock %}#}
+                                    {#                    </a>#}
+                                    {#                    {% block extrabuttons %}#}
+                                    {#                    {% endblock %}#}
+                                    {#                    <a href="{% block cancelar %}/{% endblock %}" class="btn btn-danger {% block clasextracancelar %}{% endblock %} ">#}
+                                    {#                        <i class="fas fa-times"></i> Cancelar#}
+                                    {#                    </a>#}
+                                    {#                </div>#}
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /.container-fluid -->
+        </div>
+        <!-- End of Main Content -->
+        <!-- Footer -->
+        <footer class="sticky-footer bg-white">
+            <div class="container my-auto">
+                <div class="copyright text-center my-auto">
+                    <span>Copyright &copy; Your Website 2024</span>
+                </div>
+            </div>
+        </footer>
+        <!-- End of Footer -->
+
+    </div>
+    <!-- End of Content Wrapper -->
+
+</div>
+
+
+
+<div id="throbber" style="display: none">
+    <img src="/static/images/cargando.gif" style=" margin: -110px;"/>
+</div>
+</body>
+
+</html>

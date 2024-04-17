@@ -1,0 +1,14 @@
+{% extends "formulariobase.html" %}
+{% block retroceder %}
+    <div class="section-header-back">
+        <a href="/grupos" class="btn btn-icon" data-toggle="tooltip" data-original-title="Retroceder"
+           data-placement="bottom"><i class="fas fa-arrow-left"></i></a>
+    </div>
+{% endblock %}
+{% block accionformulario %}/grupos{% endblock %}
+{% block destinoformulario %}/grupos{% endblock %}
+{% block elementosextra %}
+    <input type='hidden' name='action' value='addgrupo'/>
+{% endblock %}
+{% block cancelar %}/grupos{% endblock %}
+{% block nombreboton %}Guardar{% endblock %}

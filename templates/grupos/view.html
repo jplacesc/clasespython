@@ -1,0 +1,197 @@
+{% extends "index.html" %}
+{% load extras %}
+{% block cabecera %}
+    <script type="text/javascript" src="/static/js/jquery.isloading.min.js"></script>
+    <link href="/static/css/table-responsive.css?1.0.0" type="text/css" rel="stylesheet"/>
+    <script type='text/javascript' src="/static/js/form.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            busquedabi = function () {
+                var term = $("#searchinput").val().trim().toUpperCase();
+                let href = "{{ request.path }}?s=" + term;
+                location.href = href;
+            };
+            $('#searchinput').keyup(function (e) {
+                if (e.keyCode == 13) {
+                    busquedabi();
+                }
+            });
+        });
+
+        function formModal(id, text, action) {
+            bloquearpantalla();
+            $.ajax({
+                type: "GET",
+                url: `{{ request.path }}`,
+                data: {
+                    'action': action,
+                    'id': id,
+                },
+                success: function (data) {
+                    if (data.result === true) {
+                        $.unblockUI();
+                        $('.panelbody').html(data.data);
+                        $('#itemspanel .paneltitle').html(text);
+                        $("#itemspanel").modal({backdrop: 'static', width: '900px'}).modal('show');
+                    } else {
+                        $.unblockUI();
+                        alertaDanger(data.message);
+                    }
+                },
+                error: function () {
+                    $.unblockUI();
+                    alertaDanger("Error de conexión.");
+                },
+                dataType: "json"
+            });
+        }
+
+        $(document).on('click', '.close-modal', function () {
+            $(this).parents(".modal").modal("hide");
+        });
+    </script>
+{% endblock %}
+{% block atras-titulo %}
+    <div class="section-header-back">
+        <div class="row">
+            <div class="col-1">
+                <a href="/" class="btn btn-light btn-icon-split">
+                        <span class="icon text-white-50">
+                            <i class="fas fa-arrow-left"></i>
+                        </span>
+                </a>
+            </div>
+            <div class="col-11">
+                <h6 class="m-0 font-weight-bold text-primary">{{ title }}</h6>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block cuerpo %}
+    <div class="card-header py-3">
+        <div class="row">
+            <div class="col-2">
+                <a href="javascript:void(0)"
+                   onclick="formModal('','Agregar grupo','agregarGrupo')" class="btn btn-success btn-icon-split">
+                    <span class="icon text-white-50">
+                                            <i class="fas fa-plus-circle"></i>
+                                        </span>
+                    <span class="text">Agregar</span>
+                </a>
+                <a href="/grupos?action=addgrupo" class='btn btn-icon icon-left btn-success note-btn'>
+                                <span class="fa fa-plus "></span> Adicionar
+                            </a>
+            </div>
+            <div class="col-1">
+                <div class="input-group-append">
+                    <a class="btn color-purple-icon" href="javascript:void(0);" onclick="busquedabi()"
+                       id="button-addon2"><i
+                            class="fa fa-search"></i></a>
+                    {% if s or m %}
+                        <a title="Ver todo" href="{{ request.path }}"
+                           class="btn color-purple-icon  tr cleartext"><i
+                                class="fas fa-sync-alt"></i></a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-9">
+                <input type="text" class="form-control search backgroud-busq" id='searchinput'
+                       placeholder="Buscar grupos"
+                       aria-label="Buscar" aria-describedby="button-addon2" name="s" value="{{ s }}">
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                <tr>
+                    <th style="text-align: center; vertical-align: middle; width: 10%"
+                        class="hidden-phone hidden-tablet">#
+                    </th>
+                    <th style="text-align: center; vertical-align: middle; width: 40%">Nombre</th>
+                    <th style="text-align: center; vertical-align: middle; width: 20%">Opciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for dato in eGrupos %}
+                    <tr>
+                        <td style="text-align: center" kardexid="{{ dato.id }}">
+                            {{ forloop.counter }}
+                        </td>
+                        <td style="text-align: left;">
+                            {{ dato.name }}
+                        </td>
+                        <td style="text-align: center">
+
+                            <div class="btn-group dropleft">
+                                <a href="#" class="btn-icon btn btn-ghost btn-sm rounded-circle"
+                                   id="dropdownMenuLink{{ dato.id }}" role="button" id="dropdownMenuLink"
+                                   data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fa fa-ellipsis-v fs-6"></i>
+                                </a>
+
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenuLink{{ dato.id }}">
+                                    <a class="dropdown-item fs-6" href="javascript:void(0)"
+                                       onclick="formModal('{{ dato.id }}','Editar grupo','editarGrupo')">
+                                        <i class="fa fa-edit dropdown-item-icon mb-1 fs-6"></i> Editar
+                                    </a>
+                                    <a class="dropdown-item fs-6" href="javascript:;" title="Eliminar"
+                                       onclick="eliminarajax('{{ dato.id }}', '{{ dato }}', 'eliminarGrupo')">
+                                        <i class="fa fa-trash dropdown-item-icon mb-1 fs-6"></i> Eliminar
+                                    </a>
+                                    <a class="dropdown-item fs-6"
+                                       href='/grupos?action=editgrupo&id={{ dato.id}}'
+                                       data-toggle="tooltip"
+                                       data-placement="top"
+                                       data-original-title="Editar">
+                                        <i class="fa fa-edit dropdown-item-icon mb-1 fs-6"></i> Editar
+                                    </a>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4">
+                            No existen registros
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer border-top-0">
+        {% include 'paginacion.html' %}
+    </div>
+
+    <div class="modal fade static" id="itemspanel">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document" id="wmodal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4><b class="paneltitle">FORMULARIO MODAL</b></h4>
+                </div>
+                <div class="modal-body" style="padding: 1.5%;">
+                    <form class="form-horizontal form-modal" autocomplete="off" method="post"
+                          enctype="multipart/form-data" action="{{ request.path }}">
+                        {% csrf_token %}
+                        <div class="row panelbody">
+                        </div>
+                        <div class="modal-footer" id="footermodal">
+                            <div style="text-align: right; float: left; width: 100%">
+                                <button type="submit" id="submit" class="btn btn-success"><i
+                                        class="fa fa-check-circle"></i> Guardar
+                                </button>
+                                <button type="button" class="btn btn-danger close-modal"><i
+                                        class="fa fa-times-circle"></i> Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+{% endblock %}

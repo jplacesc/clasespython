@@ -1,0 +1,172 @@
+{% load extras %}
+<input type="hidden" name="action" value="{{ action }}">
+<input type="hidden" name="id" value="{{ id }}">
+{% for field in form %}
+    {% if field.field.widget.attrs.separator %}
+        {% if field.field.widget.attrs.blanklinebefore %}
+        {% endif %}
+        <div style="width: 100%; height: max-content">
+            <h6 style="width:100%; text-align:left; border-bottom: 1px solid #98a3ab; line-height:0.1em; margin:10px 0 20px;">
+                <span style="padding:0 10px; background: #f5f5f5;">
+                    {% if field.field.widget.attrs.separatortitle %}
+                        {{ field.field.widget.attrs.separatortitle }}
+                    {% endif %}
+                 </span>
+            </h6>
+        </div>
+    {% endif %}
+    <div id="fieldset_{{ field.name }}" class="col-lg-{% if field.field.widget.attrs.col %}{{ field.field.widget.attrs.col }}{% else %}12{% endif %}" style="float: left; padding-right: 10px;">
+        <label class="control-label pr-2" for="id_{{ field.name }}">
+            <b>{{ field.label }}&nbsp;:</b>
+        </label>
+        <div style="width:{% if not field.field.widget.attrs.controlwidth %}100%{% else %}{{ field.field.widget.attrs.controlwidth }}{% endif %};">
+            {% if field.field.widget.attrs.select2search %}
+                <select id="id_{{ field.name }}_select2" style="width: 100%"
+                        {% if field.field.widget.attrs.disabled %}disabled=""{% endif %}>
+                    <option value="0" selected="selected">---------</option>
+                </select>
+                <input name="{{ field.name }}" id="id_{{ field.name }}" value="{{ field.value }}"
+                       hidden="hidden"
+                       type="hidden"
+                       {% if field.field.widget.attrs.descripcion %}descripcion="{{ field.field.widget.attrs.descripcion }}"{% endif %}
+                       class="select2hidden">
+            {% elif field.name == 'archivo' %}
+                <input type="file" name="{{ field.name }}" {% if filtro.archivo %}data-default-file="/media/{{ filtro.archivo }}" value="/media/{{ filtro.archivo }}"{% endif %}
+                       class="form-control" id="id_{{ field.name }}" data-allowed-file-extensions="jpg png jpeg">
+                {% if filtro.archivo %}
+                    <a href="/media/{{ filtro.archivo }}" target="_blank"><i class="fa fa-download"></i>
+                        {{ filtro.archivo }}</a>
+                {% endif %}
+            {% else %}
+                {{ field }}
+            {% endif %}
+        </div>
+        <p class="help-text">{{ field.help_text }} </p>
+    </div>
+{% endfor %}
+<script>
+    $(function () {
+        $('select').select2({width: '100%'});
+        $("#id_codigo,#id_descripcion,#id_categoria,#id_marca,#id_unidad_base,#id_impuesto").addClass("validate[required]");
+        $('#id_marca').change(function () {
+            var id = $('#id_marca').val();
+            if (id == "NaN" || id == 0) {
+                BlockInterface();
+                $('#id_marca').empty().append('<option value="">---------</option>');
+                $.ajax({
+                    type: "POST",
+                    url: "/producto",
+                    data: {'action': 'consulta_marca'},
+                    success: function (data) {
+                        if (data.result == 'ok') {
+                            $.unblockUI();
+                            for (elemento in data.lista) {
+                                $('#id_marca').append('<option value="' + data.lista[elemento][0] + '">' + data.lista[elemento][1] +'</option>');
+                            }
+                        } else {
+                            $.unblockUI();
+                            $('#id_marca').val(0).trigger("change");
+                            Swal.fire({text: data.mensaje});
+                        }
+                    },
+                    error: function () {
+                        $.unblockUI();
+                        $('#id_marca').val(0).trigger("change");
+                        Swal.fire({text: "Error de conexion."});
+                    },
+                    dataType: "json"
+                });
+            }
+        });
+        $('#id_unidad_base').change(function () {
+            var id = $('#id_unidad_base').val();
+            if (id == "NaN" || id == 0) {
+                BlockInterface();
+                $('#id_unidad_base').empty().append('<option value="">---------</option>');
+                $.ajax({
+                    type: "POST",
+                    url: "/producto",
+                    data: {'action': 'consulta_unidad_base'},
+                    success: function (data) {
+                        if (data.result == 'ok') {
+                            $.unblockUI();
+                            for (elemento in data.lista) {
+                                $('#id_unidad_base').append('<option value="' + data.lista[elemento][0] + '">' + data.lista[elemento][1] +'</option>');
+                            }
+                        } else {
+                            $.unblockUI();
+                            $('#id_unidad_base').val(0).trigger("change");
+                            Swal.fire({text: data.mensaje});
+                        }
+                    },
+                    error: function () {
+                        $.unblockUI();
+                        $('#id_unidad_base').val(0).trigger("change");
+                        Swal.fire({text: "Error de conexion."});
+                    },
+                    dataType: "json"
+                });
+            }
+        });
+        $('#id_impuesto').change(function () {
+            var id = $('#id_impuesto').val();
+            if (id == "NaN" || id == 0) {
+                BlockInterface();
+                $('#id_impuesto').empty().append('<option value="">---------</option>');
+                $.ajax({
+                    type: "POST",
+                    url: "/producto",
+                    data: {'action': 'consulta_impuesto'},
+                    success: function (data) {
+                        if (data.result == 'ok') {
+                            $.unblockUI();
+                            for (elemento in data.lista) {
+                                $('#id_impuesto').append('<option value="' + data.lista[elemento][0] + '">' + data.lista[elemento][1] +'</option>');
+                            }
+                        } else {
+                            $.unblockUI();
+                            $('#id_impuesto').val(0).trigger("change");
+                            Swal.fire({text: data.mensaje});
+                        }
+                    },
+                    error: function () {
+                        $.unblockUI();
+                        $('#id_impuesto').val(0).trigger("change");
+                        Swal.fire({text: "Error de conexion."});
+                    },
+                    dataType: "json"
+                });
+            }
+        });
+        $('#id_categoria').change(function () {
+            var id = $('#id_categoria').val();
+            if (id == "NaN" || id == 0) {
+                BlockInterface();
+                $('#id_categoria').empty().append('<option value="">---------</option>');
+                $.ajax({
+                    type: "POST",
+                    url: "/producto",
+                    data: {'action': 'consulta_categoria'},
+                    success: function (data) {
+                        if (data.result == 'ok') {
+                            $.unblockUI();
+                            for (elemento in data.lista) {
+                                $('#id_categoria').append('<option value="' + data.lista[elemento][0] + '">' + data.lista[elemento][1] +'</option>');
+                            }
+                        } else {
+                            $.unblockUI();
+                            $('#id_categoria').val(0).trigger("change");
+                            Swal.fire({text: data.mensaje});
+                        }
+                    },
+                    error: function () {
+                        $.unblockUI();
+                        $('#id_categoria').val(0).trigger("change");
+                        Swal.fire({text: "Error de conexion."});
+                    },
+                    dataType: "json"
+                });
+            }
+        });
+    });
+</script>

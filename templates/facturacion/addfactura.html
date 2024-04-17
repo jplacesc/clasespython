@@ -1,0 +1,984 @@
+{% extends "formulariobasefactura.html" %}
+{% block heading %}
+    <link rel="stylesheet" href="/static/css/styleFactura.css">
+{% endblock %}
+{% block extrascabecera %}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            lista_items1 = [];
+            lista_forma_pago = [];
+            lista_items_medida = [];
+
+            $('.section-header').css('display', 'none');
+            $("#id_cliente").addClass("validate[required]");
+
+
+            function asignaLinea() {
+                $("table #detalle-factura tr").each(function (index) {
+                    $(this).find('td:first').text(index + 1);
+                    $(this).find('td:first').addClass('font-weight-bold')
+                });
+            }
+
+            function actualizar_lista() {
+                lista_items1 = [];
+                $("#subtotal_doce").text("000");
+                $("#subtotal_cero").text("000");
+                {#$("#subtotal_factura").text("000");#}
+                $("#impuesto_factura").text("000");
+                $("#total_factura").text("000");
+                {#var subtotal_factura = 0;#}
+                var impuesto_factura = 0;
+                var total_factura = 0;
+                var subtotal_doce = 0;
+                var subtotal_cero = 0;
+                $(".eliminar-item").each(function () {
+                    var item = $(this).data("item");
+                    var um = $(this).data("medida");
+                    var cantidad = $(this).data("cantidad");
+                    var valorimpuesto = parseFloat($(this).data("valorimpuesto"));
+                    var subtotal = parseFloat($(this).data("subtotal"));
+                    var total = parseFloat($(this).data("total"));
+                    var precio = parseFloat($(this).data("precio"));
+                    if (valorimpuesto == 0) {
+                        subtotal_cero += parseFloat(subtotal)
+                    } else {
+                        subtotal_doce += parseFloat(subtotal)
+                    }
+                    impuesto_factura += parseFloat(valorimpuesto);
+                    total_factura += parseFloat(total);
+                    var dato = {
+                        iddet: 0,
+                        cantidad: cantidad,
+                        item: item,
+                        um: um,
+                        subtotal: subtotal,
+                        valorimpuesto: valorimpuesto,
+                        total: total,
+                        precio: precio,
+                    };
+                    lista_items1.push(dato);
+                });
+                $("#subtotal_doce").text(subtotal_doce.toFixed(4));
+                $("#subtotal_cero").text(subtotal_cero.toFixed(4));
+                {#$("#subtotal_factura").text(subtotal_factura.toFixed(4));#}
+                $("#impuesto_factura").text(impuesto_factura.toFixed(4));
+                $("#total_factura").text(total_factura.toFixed(2));
+                if ($("#id_notacredito").val() == 0) {
+                    $("#id_valor").val(total_factura.toFixed(2));
+                }
+                if (lista_items1.length == 0) {
+                    $('.cambio_factura').text("000");
+                    $('#valor_efectivo').val(0);
+                }
+            };
+
+            function eliminar_item() {
+                var id = $(this).data("item");
+                var um = $(this).data("medida");
+                var cantidad = $(this).data("cantidad");
+
+                ///// AGREGA CANTIDAD EQUIVALENTE EN LISTA DE UNIDAD DE MEDIDAS PARA UN ITEM  /////
+                var sucursal_original = parseInt({{sucursalsesion.id}});
+                $.ajax({
+                        type: "POST",
+                        url: "/facturacion",
+                        data: {
+                            'action': 'consulta_equivalencia',
+                            'unidad': um,
+                            'item': id,
+                            'sucursal': sucursal_original,
+                            'cantidad': cantidad,
+                        },
+                        success: function (data) {
+                            if (data.result == 'ok') {
+                                $.unblockUI();
+                                var vCantidad = 0;
+                                for (var index = 0; index < data.lista.length; index++) {
+                                    vCantidad = false;
+                                    for (var i = 0; i < lista_items_medida.length; i++) {
+                                        if (parseInt(lista_items_medida[i].item) === parseInt(id) &&
+                                            parseInt(lista_items_medida[i].sucursal) === parseInt(sucursal_original) &&
+                                            parseInt(lista_items_medida[i].unidad) === parseInt(data.lista[index][0])) {
+                                            lista_items_medida[i].cantidad -= data.lista[index][1];
+                                            vCantidad = lista_items_medida[i].cantidad;
+                                            if (vCantidad == 0) {
+                                                lista_items_medida.splice(i, 1);
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                $.unblockUI();
+                                control.val(0).trigger("change");
+                                Swal.fire({
+                                    text: data.mensaje,
+                                    width: 380
+                                });
+                            }
+                        }, error: function (ex) {
+                            $.unblockUI();
+                            control.val(0).trigger("change");
+                            Swal.fire({
+                                text: ex,
+                                width: 380,
+                                icon: "error"
+                            });
+                        }, complete: function (ex) {
+                            $("#fila_" + id + um).remove();
+                            actualizar_lista();
+                            asignaLinea();
+                            $("#detalle-forma-pago").empty();
+                            $("#totalformapago1").text("0.00");
+                            {#$("#container-factura").getNiceScroll().resize();#}
+                            {#$("#container-factura").niceScroll().updateScrollBar();#}
+                            LimpiaTotales();
+                        },
+                        dataType: "json"
+                    }
+                );
+            };
+
+            function calcular_costos() {
+                var cantidad = $("#id_cantidad").val();
+                var precio = $("#id_precio").val();
+                var idum = parseInt($("#id_unidadmedida").val());
+                var iditem = parseInt($("#id_item").val());
+                if (idum > 0 && iditem > 0 && precio > 0 && cantidad > 0) {
+                    bloquearpantalla();
+                    $.get("/facturacion", {
+                        'action': 'calcular_costos_factura_venta',
+                        'precio': precio,
+                        'cantidad': cantidad,
+                        'idum': idum,
+                        'iditem': iditem
+                    }, function (data) {
+                        $.unblockUI();
+                        if (data.result == 'ok') {
+                            $("#id_subtotal").val(data.subtotal);
+                            $("#id_valorimpuesto").val(data.iva0);
+                            $("#id_total").val(data.total.toFixed(2));
+                        } else {
+                            return false;
+                        }
+                    }, 'json');
+                }
+            };
+
+            function eliminar_forma_pago() {
+                $(this).parents("tr").remove();
+                actualizar_lista_forma_pago();
+            }
+
+            function actualizar_lista_forma_pago() {
+                var total = 0;
+                lista_forma_pago = [];
+                $(".eliminar-forma-pago").each(function () {
+                    var idformapago = $(this).data("idformapago");
+                    var notacredito = $(this).data("notacredito");
+                    var valor = parseFloat($(this).data("valor"));
+                    var observacion = $(this).data("observacion");
+                    var listaAux = {
+                        idformapago: idformapago,
+                        notacredito: notacredito,
+                        valor: valor,
+                        observacion: observacion
+                    };
+                    lista_forma_pago.push(listaAux);
+                    total += valor;
+                });
+
+                $("#totalformapago1").text((total.toFixed(2)));
+                lista_forma_pago.sort(function (a, b) {
+                    if (a.idformapago > b.idformapago) {
+                        return 1;
+                    }
+                    if (a.idformapago < b.idformapago) {
+                        return -1;
+                    }
+                    return 0;
+                });
+            };
+
+            $('#id_formapago').select2();
+            ItemsDisplay = function (item1) {
+                if (item1.text) {
+                    return $('<span>' + item1.text + '</span>');
+                } else {
+                    if (item1.name) {
+                        return $('<span>' + item1.name + '</span>');
+                    } else {
+                        return '---------';
+                    }
+                }
+            };
+            $("#id_cliente_select2").select2({
+                placeholder: "---------",
+                allowClear: true,
+                ajax: {
+                    url: function (params) {
+                        return "/reporteria?action=data&model=Cliente&p=1&s=10&q=" + params.term;
+                    },
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            q: params.term,
+                            page: params.page
+                        };
+                    },
+                    processResults: function (data, params) {
+                        params.page = params.page || 1;
+                        return {
+                            results: data.results,
+                            pagination: {
+                                more: (params.page * 30) < data.total_count
+                            }
+                        };
+                    },
+                    cache: true
+                },
+                escapeMarkup: function (markup) {
+                    return markup;
+                }, // let our custom formatter work
+                minimumInputLength: 1,
+                templateResult: ItemsDisplay, // omitted for brevity, see the source of this page
+                templateSelection: ItemsDisplay // omitted for brevity, see the source of this page
+            }).on("select2:select", function (evt) {
+                $("#id_cliente").attr({"value": (evt.params.data.id)});
+            });
+
+
+            $('#id_cliente_select2').change(function () {
+                $('#id_ordenpedido').empty().append('<option value="">---------</option>').val(0).trigger("change");
+                var control = $(this);
+                var id = parseInt(control.val());
+                if (id > 0) {
+                    bloquearpantalla();
+                    $.ajax({
+                        type: "POST",
+                        url: "/facturacion",
+                        data: {'action': 'consulta_orden', 'id': id},
+                        success: function (data) {
+                            if (data.result == 'ok') {
+                                $.unblockUI();
+                                for (elemento in data.lista) {
+                                    $('#id_ordenpedido').append('<option value="' + data.lista[elemento][0] + '">' + data.lista[elemento][1] + '</option>');
+                                }
+                                for (elemento1 in data.listanota) {
+                                    $('#id_notacredito').append('<option value="' + data.listanota[elemento1][0] + '">' + data.listanota[elemento1][1] + '</option>');
+                                }
+                                lista_forma_pago = [];
+                                lista_items_medida = [];
+                                lista_items1 = [];
+                            } else {
+                                $.unblockUI();
+                                control.val(0).trigger("change");
+                                Swal.fire({text: data.mensaje});
+                            }
+                        }, error: function () {
+                            $.unblockUI();
+                            control.val(0).trigger("change");
+                            Swal.fire({text: "Error de conexion."});
+                        }, dataType: "json"
+                    });
+                    $('#id_item').select2('open');
+                }
+            });
+
+            {#PROCESOS PARA FORMA DE PAGO#}
+            $(".eliminar-forma-pago").click(function () {
+                eliminar_forma_pago();
+            });
+
+            $("#agregar-forma-pago").click(function () {
+                var idformapago = $("#id_formapago").val();
+                var nombre_formapago = $("#id_formapago option:selected").text();
+                var idnotacredito = $("#id_notacredito").val();
+                var nombre_nota_creedito = $("#id_notacredito option:selected").text();
+                var nombre = "";
+                if (idnotacredito > 0) {
+                    $('#id_valor').prop('disabled', false);
+                    $('#id_formapago').prop('disabled', false);
+                    nombre = nombre_nota_creedito;
+                } else {
+                    nombre = nombre_formapago;
+                }
+                var valor = parseFloat($("#id_valor").val());
+                var observacion = $("#id_observacion").val();
+                var totapagar = parseFloat($("#total_factura").text());
+                var totalformapago = parseFloat($("#totalformapago1").text());
+                var totalporpagar = (totapagar - (totalformapago + valor)).toFixed(2);
+                if ((idformapago <= 0 && idnotacredito <= 0) || valor <= 0) {
+                    Swal.fire({text: "Debe ingresar una forma de pago y un valor"});
+                    return false;
+                }
+                if (totapagar <= 0) {
+                    Swal.fire({text: "Ingrese items a facturar"});
+                    return false;
+                }
+                if (totalporpagar < 0) {
+                    Swal.fire({text: "El valor ingresado excede al total de la factura."});
+                    return false;
+                }
+                var valida = false;
+                $('#detalle-forma-pago .eliminar-forma-pago').each(function () {
+                    if (idformapago != 0 && $(this).data('idformapago') == idformapago) {
+                        Swal.fire({text: "Esta forma de pago ya ha sido ingresada."});
+                        $("#id_formapago").val(0).trigger("change");
+                        valida = true;
+                        return false;
+                    }
+                    if (idnotacredito != 0 && $(this).data('notacredito') == idnotacredito) {
+                        Swal.fire({text: "Ya ha ingresado esa NC como forma de pago."});
+                        $("#id_notacredito").val(0).trigger("change");
+                        valida = true;
+                        return false;
+                    }
+                });
+
+                if (valor > 0 && (idformapago > 0 || idnotacredito > 0) && !valida) {
+                    if ($('.eliminar-forma-pago').length == 0) {
+                        $("#detalle-forma-pago").empty();
+                    }
+
+                    if (idformapago == 2 && parseFloat(valor) == parseFloat(total_factura)) {
+                        $('#valor_efectivo').val(parseFloat(valor));
+                    }
+
+                    if (idformapago > 0) {
+                        idnotacredito = 0
+                    }
+                    if (idnotacredito > 0) {
+                        idformapago = 0
+                    }
+
+                    var row = "<tr id='formapago_" + idformapago + "' >" +
+                        "<td>" + nombre + "</td>" +
+                        "<td style='text-align: right;'>" + parseFloat(valor).toFixed(2) + "</td>" +
+                        "<td>" + observacion + "</td>" +
+                        "<td class='text-center'><a href='javascript:;' class='btn btn-sm btn-outline-danger eliminar-forma-pago' title='Eliminar' data-idformapago='" + idformapago +
+                        "' data-valor='" + valor + "'  data-observacion='" + observacion + "' ><i class='far fa-trash-alt'></i></a></td>" +
+                        "</tr>";
+                    $("#detalle-forma-pago").append(row);
+                    $(".eliminar-forma-pago").unbind("click.eliminar-forma-pago");
+                    $(".eliminar-forma-pago").bind("click.eliminar-forma-pago", eliminar_forma_pago);
+                    $("#id_formapago").val(null).trigger('change');
+                    $("#id_valor").val(0);
+                    $("#id_observacion").val("");
+                    {#$("#container-pago").getNiceScroll().resize();#}
+                    {#$("#container-pago").niceScroll().updateScrollBar();#}
+                    actualizar_lista_forma_pago();
+                    $("#id_notacredito").val(0).trigger("change");
+                }
+                $("#id_formapago").prop('disabled', false);
+                $("#id_notacredito").prop('disabled', false);
+            });
+
+            function generaValorEfectivo(valor) {
+                var totalefectivo = $("#detalle-forma-pago a[data-idformapago=2]").data('valor') ?? 0;
+                if (totalefectivo > 0) {
+                    $("#detalle-forma-pago a[data-idformapago=2]").parents('tr').remove();
+                    actualizar_lista_forma_pago();
+                }
+                var totalPagado = parseFloat($('#totalformapago1').text());
+                var totalFactura = parseFloat($('#total_factura').text());
+                if ((parseFloat(valor) + totalPagado) < totalFactura) {
+                    Swal.fire({text: "Debe ingresar un valor mayor o igual al total de la factura, verifique si ya ha ingresado otra forma de pago para completar el total de la factura."});
+                    $('#valor_efectivo').val((totalFactura - totalPagado).toFixed(2));
+                    $('.cambio_factura').text('000');
+                    return false;
+                } else {
+                    var valorFinalEfectivo = totalFactura - totalPagado;
+                    var row = "<tr id='formapago_2' >" +
+                        "<td>EFECTIVO</td>" +
+                        "<td style='text-align: right;'>" + parseFloat(valorFinalEfectivo).toFixed(2) + "</td>" +
+                        "<td></td>" +
+                        "<td class='text-center'><a href='javascript:;' class='btn btn-sm btn-outline-danger eliminar-forma-pago' title='Eliminar' data-idformapago='2' data-notacredito='0' data-valor='" + valorFinalEfectivo + "'  data-observacion='' ><i class='far fa-trash-alt'></i></a></td>" +
+                        "</tr>";
+                    $("#detalle-forma-pago").append(row);
+                    $(".eliminar-forma-pago").unbind("click.eliminar-forma-pago");
+                    $(".eliminar-forma-pago").bind("click.eliminar-forma-pago", eliminar_forma_pago);
+                    actualizar_lista_forma_pago();
+                    console.log((totalPagado + parseFloat(valor) - totalFactura).toFixed(2))
+                    $('.cambio_factura').text((totalPagado + parseFloat(valor) - totalFactura).toFixed(2));
+                }
+            }
+
+            $('#valor_efectivo').keyup(function (e) {
+                if (e.keyCode == 13) {
+                    generaValorEfectivo($(this).val());
+                }
+            });
+
+
+            $('#id_valor').keyup(function (e) {
+                if (e.keyCode == 13) {
+                    $('#agregar-forma-pago').focus();
+                }
+            });
+
+            $('#id_formapago').change(function () {
+                $("#id_valor").val((parseFloat($("#total_factura").text()) - parseFloat($("#totalformapago1").text())).toFixed(2));
+                if ($(this).val() > 0) {
+                    $("#id_notacredito").val(0).trigger("change");
+                    $('#id_valor').prop('disabled', false);
+                }
+            });
+
+
+            {#PROCESOS PARA FACTURAR PRODUCTOS #}
+            $('#id_item').change(function () {
+                var control = $(this);
+                var id = parseInt($("#id_item").val());
+                var idorden = parseInt($("#id_ordenpedido").val());
+                if (id > 0) {
+                    var unidadBase = "";
+                    bloquearpantalla();
+                    $.ajax({
+                        type: "POST",
+                        url: "/facturacion",
+                        data: {'action': 'consulta_unidadmedida', 'id': id, 'idorden': idorden},
+                        dataType: "json",
+                        success: function (data) {
+                            if (data.result == 'ok') {
+                                $('#id_unidadmedida').empty().append('<option value="">---------</option>').val(0);//.trigger("change");
+                                for (elemento in data.lista) {
+                                    $('#id_unidadmedida').append('<option value="' + data.lista[elemento][0] + '">' + data.lista[elemento][1] + '</option>');
+                                }
+                                unidadBase = data.unidad_base;
+                            } else {
+                                control.val(0).trigger("change");
+                                Swal.fire({text: data.mensaje});
+                            }
+                        },
+                        error: function (ex) {
+                            $.unblockUI();
+                            control.val(0).trigger("change");
+                            Swal.fire({text: ex.mensaje});
+                        },
+                        complete: function (data) {
+                            $("#id_stock").val(0);
+                            $("#id_cantidad").val(1);
+                            $("#id_precio").val(0);
+                            $("#id_subtotal").val(0);
+                            $("#id_valorimpuesto").val(0);
+                            $("#id_total").val(0);
+                            $.unblockUI();
+                            $('#id_unidadmedida').val(unidadBase).trigger('change');
+                            {#$("#container-factura").getNiceScroll().resize();#}
+                            {#$("#container-factura").niceScroll().updateScrollBar();#}
+                        }
+                    });
+                } else {
+                    $('#id_item').empty().append('<option value="">---------</option>').val(0);
+                    bloquearpantalla();
+                    $.ajax({
+                        type: "POST",
+                        url: "/facturacion",
+                        data: {'action': 'consulta_items', 'id': 0},
+                        dataType: "json",
+                        success: function (data) {
+                            if (data.result == 'ok') {
+                                for (elemento in data.lista) {
+                                    $('#id_item').append('<option value="' + data.lista[elemento][0] + '">' + data.lista[elemento][1] + '</option>');
+                                }
+                            } else {
+                                control.val(0).trigger("change");
+                                Swal.fire({text: data.mensaje});
+                            }
+                        },
+                        error: function () {
+                            $.unblockUI();
+                            control.val(0).trigger("change");
+                            Swal.fire({text: "Error de conexion."});
+                        },
+                        complete: function () {
+                            $.unblockUI();
+                            $("#id_cantidad").focus();
+                        }
+                    });
+                }
+            });
+
+            function LimpiaTotales() {
+                $('#id_subtotal').val(0);
+                $('#id_subtotal').text("0");
+                $('#id_valorimpuesto').val(0);
+                $('#id_valorimpuesto').text("0");
+                $('#id_total').val(0);
+                $('#id_total').text("0");
+            }
+
+            $('#id_unidadmedida').on('change', function (e) {
+                var control = $(this);
+                var id = parseInt($("#id_unidadmedida").val());
+                var iditem = parseInt($("#id_item").val());
+                var id_sucursalorigen = {{sucursalsesion.id}};
+                if (id > 0 && iditem > 0) {
+                    $.blockUI({
+                        message: '<div class="spinner-border text-primary" role="status" style="width:50px;height:50px;"><span class="sr-only">Cargando...</span></div>',
+                        css: {background: 'none', border: 'none'}
+                    });
+                    $('#id_stock').val(0);
+                    $('#id_stock').text("0");
+                    $('#id_precio').val(0);
+                    $('#id_precio').text("0");
+                    LimpiaTotales();
+                    $()
+                    $.ajax({
+                        type: "POST",
+                        url: "/facturacion",
+                        data: {'action': 'consulta_precio', 'idum': id, 'iditem': iditem},
+                        dataType: "json",
+                        success: function (data) {
+                            if (data.result == 'ok') {
+                                if (data.stock == 0) {
+                                    Swal.fire({text: "No hay existencias para este item en dicha unidad de medida."});
+                                    return false;
+                                }
+                                var cantidad_transferida = 0;
+                                for (var i = 0; i < lista_items_medida.length; i++) {
+                                    if (parseInt(lista_items_medida[i].item) == parseInt(iditem) &&
+                                        parseInt(lista_items_medida[i].unidad) == parseInt(id) &&
+                                        parseInt(lista_items_medida[i].sucursal) == parseInt(id_sucursalorigen)) {
+                                        cantidad_transferida += parseFloat(lista_items_medida[i].cantidad);
+                                    }
+                                }
+                                $("#id_stock").val(Math.trunc(data.stock - cantidad_transferida));
+                                $('#id_precio').val(data.precio);
+                            } else {
+                                control.val(0).trigger("change");
+                                Swal.fire({text: data.mensaje});
+                            }
+                        },
+                        error: function () {
+                            $.unblockUI();
+                            control.val(0).trigger("change");
+                            Swal.fire({text: "Error de conexion."});
+                        },
+                        complete: function () {
+                            $("#id_cantidad").focus();
+                            $("#id_cantidad").select();
+                            LimpiaTotales();
+                            calcular_costos();
+                            {#$("#container-factura").getNiceScroll().resize();#}
+                            {#$("#container-factura").niceScroll().updateScrollBar();#}
+                            $.unblockUI();
+
+                        }
+                    });
+                }
+            });
+
+
+            $('#id_cantidad').click(function (e) {
+                $(this).select();
+            });
+
+            $('#id_cantidad').keypress(function (evt) {
+                var code = (evt.which) ? evt.which : evt.keyCode;
+                if (code == 8) { // backspace.
+                    return true;
+                } else if (code >= 48 && code <= 57) { // is a number.
+                    return true;
+                } else { // other keys.
+                    return false;
+                }
+            });
+
+
+            $('#id_precio').blur(function () {
+                document.getElementById("agregar-item").style.display = "none";
+                var elemento = $(this);
+                var valor = elemento.val();
+                var iditem = parseInt($("#id_item").val());
+                var idum = $("#id_unidadmedida").val();
+                if (idum > 0 && iditem > 0 && valor > 0)  {
+                    bloquearpantalla();
+                    $.ajax({
+                        type: "POST",
+                        url: "/facturacion",
+                        data: {'action': 'consulta_precio_minimo', 'idum': idum, 'iditem': iditem, 'valor': valor},
+                        success: function (data) {
+                            document.getElementById("agregar-item").style.display = "block";
+                            if (data.result == 'novalido') {
+                                if (typeof data.precio != 'undefined') {
+                                    elemento.val(data.precio);
+                                    calcular_costos();
+                                }
+                                Swal.fire({text: data.mensaje});
+                                return false;
+                            }else{
+                                calcular_costos();
+                            }
+                        },
+                        error: function () {
+                            $.unblockUI();
+                            elemento.val(0);
+                            document.getElementById("agregar-item").style.display = "block";
+                            Swal.fire({text: "Error de conexion."});
+                        },
+                        complete: function () {
+                            calcular_costos();
+                            $.unblockUI();
+                            document.getElementById("agregar-item").style.display = "block";
+                        }, dataType: "json"
+                    });
+                }
+            });
+
+
+            $("#agregar-item").click(function (e) {
+                document.getElementById("agregar-item").style.display = "none";
+                e.preventDefault();
+                e.stopPropagation();
+                var total = $("#id_total").val();
+                var item = $("#id_item").val();
+                var nombre_item = $("#id_item option:selected").text();
+                var idunidadmedida = $("#id_unidadmedida").val();
+                var nombre_unidadmedida = $("#id_unidadmedida option:selected").text();
+                var cantidad = $("#id_cantidad").val();
+                var precio = $("#id_precio").val();
+                var subtotal = $("#id_subtotal").val();
+                var valorimpuesto = $("#id_valorimpuesto").val();
+                if (parseInt(cantidad) > parseInt($('#id_stock').val())) {
+                    Swal.fire({text: "No existe suficiente stock para agregar el item."});
+                    document.getElementById("agregar-item").style.display = "block";
+                    return false;
+                }
+                if ($("#fila_" + item + idunidadmedida).length) {
+                    Swal.fire({text: "El item ya ha sido ingresado."});
+                    document.getElementById("agregar-item").style.display = "block";
+                    return false;
+                }
+                if (item <= 0) {
+                    Swal.fire("Seleccione un Item");
+                    document.getElementById("agregar-item").style.display = "block";
+                    return false;
+                }
+                if (parseInt(cantidad) < 1) {
+                    Swal.fire("No puede ingresar cantidades menores a 1");
+                    document.getElementById("agregar-item").style.display = "block";
+                    return false;
+                }
+                if (idunidadmedida <= 0) {
+                    Swal.fire("Debe seleccionar la Unidad de Medida ");
+                    document.getElementById("agregar-item").style.display = "block";
+                    return false;
+                }
+                if (parseFloat(precio) <= 0) {
+                    Swal.fire("Debe ingresar el precio");
+                    document.getElementById("agregar-item").style.display = "block";
+                    return false;
+                }
+                if (parseFloat(subtotal) <= 0) {
+                    Swal.fire("El sub total no debe ser menor o igual a cero");
+                    document.getElementById("agregar-item").style.display = "block";
+                    return false;
+                }
+                if (parseFloat(total) <= 0) {
+                    Swal.fire("El total no debe ser menor o igual a cero");
+                    document.getElementById("agregar-item").style.display = "block";
+                    return false;
+                }
+
+                var tipoemision = $("#id_tipo").val();
+                if (tipoemision == 2) {
+                    if (lista_items1.length >= (parseInt({{ limiteitems }}))) {
+                        Swal.fire({text: "No puede ingresar más de ({{ limiteitems }}) productos."});
+                        document.getElementById("agregar-item").style.display = "block";
+                        return false;
+                    }
+                }
+
+                ///// AGREGA CANTIDAD EQUIVALENTE EN LISTA DE UNIDAD DE MEDIDAS PARA UN ITEM  /////
+                var sucursal_original = parseInt({{sucursalsesion.id}});
+                $.blockUI({
+                    message: '<div class="spinner-border text-primary" role="status" style="width:50px;height:50px;"><span class="sr-only">Cargando...</span></div>',
+                    css: {background: 'none', border: 'none'}
+                });
+
+                $.ajax({
+                    type: "POST",
+                    url: "/facturacion",
+                    data: {
+                        'action': 'consulta_equivalencia',
+                        'unidad': idunidadmedida,
+                        'item': item,
+                        'sucursal': sucursal_original,
+                        'cantidad': cantidad,
+                    },
+                    success: function (data) {
+                        if (data.result == 'ok') {
+                            var vExiste = false;
+                            for (var index = 0; index < data.lista.length; index++) {
+                                vExiste = false;
+                                for (var i = 0; i < lista_items_medida.length; i++) {
+                                    if (parseInt(lista_items_medida[i].item) === parseInt(item) &&
+                                        parseInt(lista_items_medida[i].sucursal) === parseInt(sucursal_original) &&
+                                        parseInt(lista_items_medida[i].unidad) === parseInt(data.lista[index][0])) {
+                                        lista_items_medida[i].cantidad += data.lista[index][1];
+                                        vExiste = true;
+                                    }
+                                    if (vExiste) {
+                                        break;
+                                    }
+                                }
+                                if (!vExiste) {
+                                    var lista_aux2 = {
+                                        item: item,
+                                        sucursal: sucursal_original,
+                                        unidad: data.lista[index][0],
+                                        cantidad: data.lista[index][1],
+                                    };
+                                    lista_items_medida.push(lista_aux2);
+                                }
+                            }
+                        } else {
+                            $(this).val(0).trigger("change");
+                            Swal.fire({
+                                text: data.mensaje,
+                                width: 380
+                            });
+                        }
+                    }, error: function (ex) {
+                        $.unblockUI();
+                        document.getElementById("agregar-item").style.display = "block";
+                        $(this).val(0).trigger("change");
+                        Swal.fire({
+                            text: ex,
+                            width: 380,
+                            icon: "error"
+                        });
+                    },
+                    complete: function () {
+                        $.unblockUI();
+                        document.getElementById("agregar-item").style.display = "block";
+                        var row = "<tr id='fila_" + item + "" + idunidadmedida + "' >" +
+                            "<td style='width:10px;'></td>" +
+                            "<td class='text-left' style='width:auto;'>" + nombre_item + "</td>" +
+                            "<td class='text-center' style='width:150px;'>" + nombre_unidadmedida + "</td>" +
+                            "<td class='text-right' style='width:85px;'>" + cantidad + "</td>" +
+                            "<td class='text-right' style='width:85px;'></td>" +
+                            "<td class='text-right' style='width:85px;'>" + precio + "</td>" +
+                            "<td class='text-right' style='width:85px;'>" + subtotal + "</td>" +
+                            "<td class='text-right' style='width:85px;'>" + valorimpuesto + "</td>" +
+                            "<td class='text-right' style='width:85px;'>" + total + "</td>" +
+                            "<td class='text-center' style='width:40px;'><a href='javascript:;' data-toggle='tooltip' data-original-title='Eliminar Item' data-placement='top' class='btn btn-outline-danger btn-sm eliminar-item' data-medida='" + idunidadmedida +
+                            "' data-item='" + item + "'  data-valorimpuesto='" + valorimpuesto + "' data-subtotal='" + subtotal +
+                            "' data-total='" + total + "' data-cantidad='" + cantidad + "' data-precio='" + precio + "' ><i class='far fa-trash-alt'></i></a></td>" +
+                            "</tr>";
+                        $("#detalle-factura").append(row);
+                        actualizar_lista();
+                        asignaLinea();
+                        $(".eliminar-item").unbind("click.eliminar-item");
+                        $(".eliminar-item").bind("click.eliminar-item", eliminar_item);
+                        $("#id_unidadmedida").val(null).trigger('change');
+                        $("#id_stock").val(0);
+                        $("#id_cantidad").val(1);
+                        $("#id_precio").val(0);
+                        $("#id_subtotal").val(0);
+                        $("#id_valorimpuesto").val(0);
+                        $("#id_total").val(0);
+                        $('#id_item').select2('open');
+                        {#$("#container-factura").getNiceScroll().resize();#}
+                        {#$("#container-factura").niceScroll().updateScrollBar();#}
+                        LimpiaTotales();
+                        {#$('#id_item').empty().append('<option value="">---------</option>').val(0);#}
+                    }, dataType: "json"
+                });
+            });
+
+            $('#id_direccionentrega').keyup(function (e) {
+                if (e.keyCode == 13) {
+                    $('#id_item').select2('open');
+                }
+            });
+
+            $('#id_tipo').change(function (e) {
+                $('#id_ordenpedido').select2('open');
+                lista_items1 = [];
+                $("#detalle-factura").empty();
+            });
+
+
+        })
+        ;
+    </script>
+{% endblock %}
+{% block atras-titulo %}
+    <div class="section-header-back">
+        <div class="row">
+            <div class="col-1">
+                <a href="/facturacion" class="btn btn-light btn-icon-split">
+                                        <span class="icon text-white-50">
+                                            <i class="fas fa-arrow-left"></i>
+                                        </span>
+                </a>
+            </div>
+            <div class="col-11">
+                <h6 class="m-0 font-weight-bold text-primary">Facturación</h6>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block accionformulario %}/facturacion{% endblock %}
+{% block destinoformulario %}/facturacion?action=imprimir_cancelar&id={% endblock %}
+{% block formdetail %}
+    <div class="col-md-12 mt-3">
+        <div class="row">
+            <div class="col-12">
+                <div id="container-factura">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                            <tr>
+                                <th class="text-center" style="width:10px;">#</th>
+                                <th class="text-center" style="width:auto;">Item</th>
+                                <th class="text-center" style="width:150px;">U/M</th>
+                                <th class="text-center" style="width:85px;">Cantidad</th>
+                                <th class="text-center" style="width:85px;">Disponible</th>
+                                <th class="text-center" style="width:85px;">Precio</th>
+                                <th class="text-center" style="width:85px;">Sub total</th>
+                                <th class="text-center" style="width:85px;">Impuesto</th>
+                                <th class="text-center" style="width:85px;">Total</th>
+                                <th class="text-center" style="width:40px;"></th>
+                            </tr>
+                            <tr>
+                                <td style="width:10px;"></td>
+                                {% for field in formdetalle %}
+                                    <td style="width:
+
+
+
+                                            {% if field.field.widget.attrs.width_control %}{{ field.field.widget.attrs.width_control }}{% endif %}">
+                                        {% if field.field.widget.attrs.select2search %}
+                                            <select id="id_{{ field.name }}_select2"
+                                                    {% if field.field.widget.attrs.disabled %} disabled=""{% endif %}>
+                                                <option value="0" selected="selected">---------</option>
+                                            </select>
+                                            <input name="{{ field.name }}" id="id_{{ field.name }}" value="
+
+
+
+                                                    {% if field.field.widget.attrs.value %}{{ field.field.widget.attrs.value }}{% else %}{{ field.value }}{% endif %}"
+                                                   hidden="hidden" {% if field.field.widget.attrs.descripcion %}
+                                                   descripcion="{{ field.field.widget.attrs.descripcion }}"{% endif %}
+                                                   class="select2hidden form-control form-control-sm">
+                                        {% else %}
+                                            {{ field }}
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                                <td style="width: 40px;">
+                                    <a href="javascript:;" id="agregar-item" name="agregar-item"
+                                       class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-plus"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            </thead>
+                            <tbody id="detalle-factura">
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-9 col-md-9 col-sm-12 mb-2">
+                <div class="row">
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                        <div class="table-responsive">
+                            <div id="container-pago">
+                                <table class="table table-sm mr-2">
+                                    <thead>
+                                    <tr>
+                                        <th class="text-center" style="width: 150px;">Forma Pago</th>
+                                        <th class="text-center" style="width: 85px;">Valor</th>
+                                        <th class="text-center" style="width: 150px;">Observación</th>
+                                        <th class="text-center" style="width: 40px;"></th>
+                                    </tr>
+                                    <tr>
+                                        {% for field in formformapago %}
+                                            <td style="width:
+
+
+
+                                                    {% if field.field.widget.attrs.width_control %}{{ field.field.widget.attrs.width_control }}{% endif %}">
+                                                {% if field.field.widget.attrs.select2search %}
+                                                    <select id="id_{{ field.name }}_select2"
+                                                            {% if field.field.widget.attrs.disabled %}disabled=""{% endif %}>
+                                                        <option value="0" selected="selected">---------</option>
+                                                    </select>
+                                                    <input name="{{ field.name }}" id="id_{{ field.name }}" value="
+
+
+
+                                                            {% if field.field.widget.attrs.value %}{{ field.field.widget.attrs.value }}{% else %}{{ field.value }}{% endif %}"
+                                                           hidden="hidden" {% if field.field.widget.attrs.descripcion %}
+                                                           descripcion="{{ field.field.widget.attrs.descripcion }}"{% endif %}
+                                                           class="select2hidden form-control form-control-sm"/>
+                                                {% else %}
+                                                    {{ field }}
+                                                {% endif %}
+                                            </td>
+                                        {% endfor %}
+                                        <td class="text-center" style="width: 40px;">
+                                            <a href="javascript:;" id="agregar-forma-pago" data-original-title="Agregar"
+                                               data-placement="top" class="btn btn-outline-success btn-sm">
+                                                <i class="fa fa-plus"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="detalle-forma-pago">
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        <a href="/facturacion?action=addcliente" target="_blank" class="btn btn-info" id="crearusuario">
+                            <i class="fas fa-user"></i> Registrar cliente
+                        </a>
+                    </div>
+                    <div class="col-6 text-right subtotales" style="font-size: 14px;">
+                        <p>Total <span class="total bg-light font-weight-bold" style="color: #6c757d;">
+                            $ <span id="totalformapago1">000</span></span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-3 col-sm-12">
+                <div class="row h-100">
+                    <div class="col-sm-12 col-md-12 col-12 text-center mb-2">
+                        <div class="form-group">
+                            <label>Efectivo recibido</label>
+                            <input type="number" class="form-control form-control-sm text-right" id="valor_efectivo"/>
+                        </div>
+                        <div class="total bg-light">
+                            <h5>$ <span class="cambio_factura">000</span></h5>
+                            <p>Cambio</p>
+                        </div>
+                    </div>
+                    <div class="col-12 d-flex justify-content-end align-items-end">
+                        <a href="javascript:;" class="btn btn-success" id="botonguardar">
+                            <i class="fas fa-save"></i> Guardar
+                        </a>&nbsp;&nbsp;
+                        <a href="/facturacion" class="btn btn-danger">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block elementosextra %}
+    <input type='hidden' name='action' value='addfactura'/>
+{% endblock %}
+

@@ -1,0 +1,28 @@
+<div class="table-responsive">
+    <table class="table table-sm data-table table-striped compact">
+        <thead>
+        <tr>
+            <th>No.</th>
+            <th>Item</th>
+            <th>Cantidad</th>
+            <th>Precio</th>
+            <th>Impuesto</th>
+            <th>Valor impuesto</th>
+            <th>Total</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for det in facturaventa.detalles %}
+            <tr>
+                <td> {{ forloop.counter }} </td>
+                <td> {{ det.itemunidadmedidastock.itemunidadmedida|default_if_none:"" }} </td>
+                <td>{{ det.cantidad }}</td>
+                <td>{{ det.precio }}</td>
+                <td>{{ det.impuesto.valor|floatformat:2 }}</td>
+                <td>{{ det.valorimpuesto }}</td>
+                <td>{{ det.total }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>

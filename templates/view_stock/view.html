@@ -1,0 +1,405 @@
+{% extends "index.html" %}
+{% load extras %}
+{% block cabecera %}
+    <script type="text/javascript" src="/static/js/jquery.isloading.min.js"></script>
+    <link href="/static/css/table-responsive.css?1.0.0" type="text/css" rel="stylesheet"/>
+    <script type='text/javascript' src="/static/js/form.js"></script>
+     <script>
+        $(function () {
+            $(".filtro_producto1, .filtro_sucursal").select2({width: "resolve"});
+            $('.filtro_producto1').change(function () {
+                busqueda();
+            });
+            $('.filtro_sucursal').change(function () {
+                busqueda();
+            });
+            busqueda = function () {
+                var producto = $("#filtro_producto1").val();
+                var sucursal = $("#filtro_sucursal").val();
+                location.href = "/view_stock?producto=" + producto + "&sucursal=" + sucursal;
+                return false;
+            };
+
+
+
+        });
+
+       $(document).on("blur", ".valor_costo_unitario", function () {
+            var elemento = $(this);
+            var idi = elemento.attr("idstock");
+            var valoranterior = elemento.data("valante") == null ? 0 : elemento.data("valante");
+            var costo_unitario = elemento.val();
+            if (parseFloat(costo_unitario) !== parseFloat(valoranterior)) {
+                var porcentajeganancia = $("#id_porcentaje_ganancia" + idi).val();
+                var precio = $("#id_precio" + idi).val();
+                bloquearpantalla();
+                $.post("/view_stock", {
+                    'action': 'cambiar_valorcosto_unitario',
+                    'id': idi,
+                    'porcentajeganancia': porcentajeganancia,
+                    'costo': costo_unitario,
+                    'precio': precio
+                }, function (data) {
+                    $.unblockUI();
+                    if (data.result == 'ok') {
+                        $("#id_precio" + idi).val(data.precio);
+                        $("#id_ganancia" + idi).html(data.ganancia);
+                        $("#id_porcentaje_ganancia" + idi).val(data.porcentaje_ganancia);
+                        elemento.val(data.costo);
+                        $("#id_costo_unitario" + idi).data('valante', data.costo);
+                    } else {
+                        elemento.val(valoranterior);
+                        $("#id_costo_unitario" + idi).data('valante', valoranterior);
+                        Swal.fire({text: data.mensaje});
+                    }
+                }).fail(function () {
+                    $.unblockUI();
+                    elemento.val(valoranterior);
+                    Swal.fire({text: "Fallo al cambiar el costo"});
+                });
+            }
+        });
+
+        $(document).on("blur", ".valor_porcentaje_ganancia", function () {
+            var elemento = $(this);
+            var idi = elemento.attr("idstock");
+            var valoranterior = elemento.data("valante") == null ? 0 : elemento.data("valante");
+            var porcentaje_ganancia = elemento.val();
+            if (parseFloat(porcentaje_ganancia) !== parseFloat(valoranterior)) {
+                var costo_unitario = $("#id_costo_unitario" + idi).val();
+                var precio = $("#id_precio" + idi).val();
+                bloquearpantalla();
+                $.post("/view_stock", {
+                    'action': 'cambiar_valorporcentaje_ganancia',
+                    'id': idi,
+                    'porcentajeganancia': porcentaje_ganancia,
+                    'costo': costo_unitario,
+                    'precio': precio
+                }, function (data) {
+                    $.unblockUI();
+                    if (data.result == 'ok') {
+                        $("#id_precio" + idi).val(data.precio);
+                        $("#id_ganancia" + idi).html(data.ganancia);
+                        $(".table #id_porcentaje_ganancia" + idi).val(data.porcentaje_ganancia);
+                        $(".table #id_porcentaje_ganancia" + idi).data("valante", data.porcentaje_ganancia)
+                    } else {
+                        $(".table #id_porcentaje_ganancia" + idi).val(valoranterior);
+                        $(".table #id_porcentaje_ganancia" + idi).data('valante', valoranterior);
+                        Swal.fire({text: data.mensaje});
+                    }
+                }).fail(function () {
+                    $.unblockUI();
+                    elemento.val(valoranterior);
+                    Swal.fire({text: "Fallo al cambiar el costo"});
+                });
+            }
+        });
+
+        $(document).on("blur", ".valor_precio", function () {
+            var elemento = $(this);
+            var idi = elemento.attr("idstock");
+            var valoranterior = elemento.data("valante") == null ? 0 : elemento.data("valante");
+            var precio = elemento.val();
+            if (parseFloat(precio) !== parseFloat(valoranterior)) {
+                var porcentajeganancia = $("#id_porcentaje_ganancia" + idi).val();
+                var costo_unitario = $("#id_costo_unitario" + idi).val();
+                bloquearpantalla();
+                $.post("/view_stock", {
+                    'action': 'cambiar_valorprecio',
+                    'id': idi,
+                    'porcentajeganancia': porcentajeganancia,
+                    'costo': costo_unitario,
+                    'precio': precio
+                }, function (data) {
+                    $.unblockUI();
+                    if (data.result == 'ok') {
+                        $("#id_ganancia" + idi).html(data.ganancia);
+                        $("#id_porcentaje_ganancia" + idi).val(data.porcentaje_ganancia);
+                        $(".table #id_precio" + idi).val(data.precio);
+                        $(".table #id_precio" + idi).data('valante', data.precio);
+                    } else {
+                        $(".table #id_precio" + idi).val(valoranterior);
+                        $(".table #id_precio" + idi).data('valante', valoranterior);
+                        Swal.fire({text: data.mensaje});
+                    }
+                }).fail(function () {
+                    $.unblockUI();
+                    elemento.val(valoranterior);
+                    Swal.fire({text: "Fallo al cambiar el costo"});
+                });
+            }
+        });
+
+        $(document).on("blur", ".valor_preciominimo", function () {
+            var elemento = $(this);
+            var idi = elemento.attr("idstock");
+            var valoranterior = elemento.data("valante") == null ? 0 : elemento.data("valante");
+            var precio = elemento.val();
+            if (precio != valoranterior) {
+                bloquearpantalla();
+                $.post("/view_stock", {
+                    'action': 'cambiar_valorpreciominimo',
+                    'id': idi,
+                    'precio': precio
+                }, function (data) {
+                    $.unblockUI();
+                    if (data.result == 'ok') {
+                        elemento.val(data.preciominimo);
+                        $("#id_preciominimo" + idi).data('valante', data.preciominimo);
+                    } else {
+                        elemento.val(valoranterior);
+                        $("#id_preciominimo" + idi).data('valante', valoranterior);
+                        Swal.fire({text: data.mensaje});
+                    }
+                }).fail(function () {
+                    $.unblockUI();
+                    elemento.val(valoranterior);
+                    Swal.fire({text: "Fallo al cambiar el costo"});
+                });
+            }
+        });
+
+        $(document).on("blur", ".valor_stock", function () {
+            var elemento = $(this);
+            var idi = elemento.attr("idstock");
+            var valoranterior = elemento.data("valante") == null ? 0 : elemento.data("valante");
+            var stock = elemento.val();
+            if (parseFloat(stock) !== parseFloat(valoranterior)) {
+                bloquearpantalla();
+                $.post("/view_stock", {
+                    'action': 'cambiar_valor_stock',
+                    'id': idi,
+                    'stock': stock
+                }, function (data) {
+                    $.unblockUI();
+                    if (data.result == 'ok') {
+                        elemento.val(data.stock);
+                        for (elemento in data.lista) {
+                            {#$('#id_provincia').append('<option value="' + data.lista[elemento][0] + '">' + data.lista[elemento][1] + '</option>');#}
+                            $("#id_stock" + data.lista[elemento][0]).data('valante', data.lista[elemento][1]);
+                            $("#id_stock" + data.lista[elemento][0]).val(data.lista[elemento][1]);
+                        }
+                        for (elemento in data.lista) {
+                            $("#id_stock_disponible" + data.lista[elemento][0]).html(data.lista[elemento][1]);
+                        }
+                    } else {
+                        elemento.val(valoranterior);
+                        $("#id_stock" + idi).data('valante', valoranterior);
+                        Swal.fire({text: data.mensaje});
+                    }
+                }).fail(function () {
+                    $.unblockUI();
+                    elemento.val(valoranterior);
+                    Swal.fire({text: "Fallo al cambiar el costo"});
+                });
+            }
+        });
+
+    </script>
+{% endblock %}
+{% block atras-titulo %}
+    <div class="section-header-back">
+        <div class="row">
+            <div class="col-1">
+                <a href="/" class="btn btn-light btn-icon-split">
+                        <span class="icon text-white-50">
+                            <i class="fas fa-arrow-left"></i>
+                        </span>
+                </a>
+            </div>
+            <div class="col-11">
+                <h6 class="m-0 font-weight-bold text-primary">{{ title }}</h6>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block cuerpo %}
+    <div class="card-header">
+        <div class="row">
+            <div class="col-12">
+                <div class="form-row">
+                    <div class="col-6 col-md-6 col-lg-6">
+                        <select id="filtro_sucursal" class="form-control filtro_sucursal">
+                            <option {% if sucursal_select == 0 %} selected{% endif %}  value="0">Todas las sucursales
+                            </option>
+                            {% for sucursal in sucursaleStock %}
+                                <option  {% if sucursal_select == sucursal.id %} selected{% endif %}
+                                                                                 value="{{ sucursal.id }}">{{ sucursal }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-6 col-lg-6">
+                        <select id="filtro_producto1" class="form-control filtro_producto1">
+                            <option {% if producto_select == 0 %} selected{% endif %} value="0">Todos los productos
+                            </option>
+                            {% for producto in productoStock %}
+                                <option {% if producto_select == producto.id %} selected{% endif %}
+                                                                                value="{{ producto.id }}">{{ producto }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-12">
+                <div class="table-responsive">
+                        <table class="table table-sm data-table table-bordered table-striped font-small">
+                            <thead>
+                            <tr>
+                                <th style="width: 30%;">Sucursal</th>
+                                <th style="width: 70%;">Detalles</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for item in existencias %}
+                                <tr>
+                                    <td>
+                                        <b>Sucursal: </b>{{ item.sucursal }}<br>
+                                        <b>Producto: </b>{{ item.itemunidadmedida.item }}
+                                    </td>
+                                    <td>
+                                        <div id="accordion">
+                                            <div class="accordion">
+                                                <div class="accordion-header collapsed text-center" role="button" data-toggle="collapse"
+                                                     data-target="#panel-body-{{ item.itemunidadmedida.item.id }}-{{ item.sucursal.id }}"
+                                                     aria-expanded="false">
+                                                    <span class="badge badge-primary text-center" ><h7><i class="fas fa-coins"></i> Detalle de Precios</h7>
+                                                    </span>
+                                                </div>
+                                                <div class="accordion-body collapse fade"
+                                                     id="panel-body-{{ item.itemunidadmedida.item.id }}-{{ item.sucursal.id }}"
+                                                     data-parent="#accordion">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm detalle-precios" style="width: 100%;">
+                                                            <thead>
+                                                            <tr>
+                                                                <th class="text-center">U/M</th>
+                                                                {% if usuario.is_superuser %}
+                                                                    <th class="text-center" style="width: 100px;">Costo
+                                                                        Unit.
+                                                                    </th>
+                                                                    <th style="width: 70px;">% Ganancia</th>
+                                                                    <th class="text-center" style="width: 100px;">Ganancia
+                                                                    </th>
+                                                                {% endif %}
+                                                                <th class="text-center" style="width: 100px;">PVP máximo
+                                                                </th>
+                                                                <th class="text-center" style="width: 100px;">PVP mínimo
+                                                                </th>
+                                                                <th class="text-center" style="width: 100px;">Stock Disp.</th>
+                                                            </tr>
+                                                            </thead>
+                                                            <tbody id="id_detalle_item">
+                                                            {% with detalles_precio=item.itemunidadmedida.item|args:item.sucursal.id|call:"view_stock_1" %}
+                                                                {% for x in detalles_precio %}
+                                                                    <tr>
+                                                                        <td>
+                                                                            {{ x.itemunidadmedida.unidad_medida }}
+                                                                        </td>
+                                                                        {% if usuario.is_superuser %}
+                                                                            <td class="text-center">
+                                                                                {% if usuario.is_superuser %}
+                                                                                    <div class="input-group">
+                                                                                        <input idstock="{{ x.id }}"
+                                                                                               data-valante="{{ x.costo_unitario }}"
+                                                                                               class="form-control valor_costo_unitario"
+                                                                                               type="number"
+                                                                                               id="id_costo_unitario{{ x.id }}"
+                                                                                               value="{{ x.costo_unitario }}">
+                                                                                    </div>
+                                                                                {% else %}
+                                                                                    <div class="form-group row align-items-center">
+                                                                                        <label for="exampleInputEmail1">{{ x.costo_unitario }}
+                                                                                        </label>
+                                                                                    </div>
+                                                                                {% endif %}
+                                                                            </td>
+                                                                            <td class="text-center">
+                                                                                {% if usuario.is_superuser %}
+                                                                                    <div class="form-row ">
+                                                                                        <input idstock="{{ x.id }}"
+                                                                                               data-valante="{{ x.porcentaje_ganancia }}"
+                                                                                               class="form-control col-12 valor_porcentaje_ganancia"
+                                                                                               type="number"
+                                                                                               id="id_porcentaje_ganancia{{ x.id }}"
+                                                                                               value="{{ x.porcentaje_ganancia }}">
+                                                                                    </div>
+                                                                                {% else %}
+                                                                                    {{ x.porcentaje_ganancia }}
+                                                                                {% endif %}
+                                                                            </td>
+                                                                            <td class="text-center">
+                                                                                <span
+                                                                                    id="id_ganancia{{ x.id }}"> {{ x.ganancia }} </span>
+                                                                            </td>
+                                                                        {% endif %}
+                                                                        <td class="text-center">
+                                                                            {% if usuario.is_superuser %}
+                                                                                <div class="input-group">
+                                                                                    <input idstock="{{ x.id }}"
+                                                                                           data-valante="{{ x.precio }}"
+                                                                                           class="form-control valor_precio"
+                                                                                           type="number"
+                                                                                           id="id_precio{{ x.id }}"
+                                                                                           value="{{ x.precio }}">
+                                                                                </div>
+                                                                            {% else %}
+                                                                                <div class="row align-items-center">
+                                                                                    <label class="col-form-label text-center col">
+                                                                                        <b>$</b> {{ x.precio }}</label>
+                                                                                </div>
+                                                                            {% endif %}
+                                                                        </td>
+                                                                        <td class="text-center">
+                                                                            {% if usuario.is_superuser %}
+                                                                                <div class="input-group">
+                                                                                    <input idstock="{{ x.id }}"
+                                                                                           data-valante="{{ x.preciominimo }}"
+                                                                                           class="form-control valor_preciominimo"
+                                                                                           type="number"
+                                                                                           id="id_preciominmo{{ x.id }}"
+                                                                                           value="{{ x.preciominimo }}">
+                                                                                </div>
+                                                                            {% else %}
+                                                                                <div class="row align-items-center">
+                                                                                    <label class="col-form-label text-center col"><b>$</b> {{ x.preciominimo|default_if_none:"0" }}
+                                                                                    </label>
+                                                                                </div>
+                                                                            {% endif %}
+                                                                        </td>
+                                                                        <td class="text-center">
+                                                                            {% if usuario.is_superuser %}
+                                                                                <input idstock="{{ x.id }}"
+                                                                                       data-valante="{{ x.stock }}"
+                                                                                       class="form-control valor_stock"
+                                                                                       type="number" id="id_stock{{ x.id }}"
+                                                                                       value="{{ x.stock }}">
+                                                                            {% else %}
+                                                                                {{ x.stock }}
+                                                                            {% endif %}
+                                                                        </td>
+                                                                    </tr>
+                                                                {% endfor %}
+                                                            {% endwith %}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}

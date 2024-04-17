@@ -1,0 +1,147 @@
+{% extends "index.html" %}
+{% load extras %}
+{% block cabecera %}
+    <script type="text/javascript" src="/static/js/jquery.isloading.min.js"></script>
+    <link href="/static/css/table-responsive.css?1.0.0" type="text/css" rel="stylesheet"/>
+    <script type='text/javascript' src="/static/js/form.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            $('.equivalenciaumfin').blur(function () {
+                var elemento = $(this);
+                var valoranterior = elemento.attr("valante");
+                var valoractual = elemento.val();
+                if (valoractual != valoranterior) {
+                    var idi = elemento.attr("idi");
+                    bloquearpantalla();
+                    $.post("/producto", {
+                        'action': 'cambiarequivalenciaumfin',
+                        'idi': idi,
+                        'valor': valoractual,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    }, function (data) {
+                        $.unblockUI();
+                        if (data.result == 'ok') {
+                            elemento.val(data.valor);
+                        } else {
+                            elemento.val(valoranterior);
+                            Swal.fire(data.mensaje);
+                        }
+                    }).fail(function () {
+                        $.unblockUI();
+                        elemento.val(valoranterior);
+                        Swal.fire("Fallo al cambiar la equivalencia");
+                    });
+                }
+            });
+        });
+
+        function eliminar(id) {
+            Swal.fire({
+                html: `¿Desea desactivar equivalencia ?`,
+                text: "Esta acción es irreversible",
+                type: 'info',
+                showCancelButton: true,
+                allowOutsideClick: false,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Si, deseo hacerlo',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.value) {
+                    $.post("/producto", {
+                        'action': 'eliminarEquivalencia',
+                        'id': id,
+                    }, function (data) {
+                        if (data.result == 'ok') {
+                            if (data.valor == 1) {
+                                $("#vigente_" + id).html('<i href="javascript:;" class="fa fa-check tu" title="Desactivar" style="color: green"></i>');
+                            } else {
+                                $("#vigente_" + id).html('<i href="javascript:;" class="fa fa-times tu" title="Activar" style="color: red"></i>');
+                            }
+                        }
+                    }, "json");
+                } else {
+                }
+            })
+        }
+    </script>
+{% endblock %}
+{% block atras-titulo %}
+    <div class="section-header-back">
+        <div class="row">
+            <div class="col-1">
+                <a href="/producto?id={{ item.id }}" class="btn btn-light btn-icon-split">
+                        <span class="icon text-white-50">
+                            <i class="fas fa-arrow-left"></i>
+                        </span>
+                </a>
+            </div>
+            <div class="col-11">
+                <h6 class="m-0 font-weight-bold text-primary">{{ title }}</h6>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block cuerpo %}
+    <div class="card-header py-3">
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm data-table compact font-small">
+                <thead>
+                <tr>
+                    <th style="text-align: center;">Valor Unidad medida origen</th>
+                    <th style="text-align: center;">Unidad Medida Origen</th>
+                    <th style="text-align: center;">=</th>
+                    <th style="text-align: center;">Equivalencia Unidad Medida</th>
+                    <th style="text-align: center;">Unidad Medida Fin</th>
+                    <th style="text-align: center;">Item/Unidad medida</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for equivalencia in equivalencias %}
+                    <tr>
+                        <td style="text-align: center;">
+                            {{ equivalencia.valorumorigen }}
+                        </td>
+                        <td>
+                            {{ equivalencia.unidad_medida_origen }}
+                        </td>
+                        <td style="text-align: center;">
+                            =
+                        </td>
+                        <td style="text-align: center;">
+                            <input style="text-align: center" id="id_equivalenciaumfin{{ equivalencia.id }}"
+                                   type="text" idi="{{ equivalencia.id }}"
+                                   class="form-control equivalenciaumfin"
+                                   valante="{{ equivalencia.equivalenciaumfin }}"
+                                   value="{{ equivalencia.equivalenciaumfin }}"
+                                    {% if  equivalencia.unidad_medida_origen == equivalencia.unidad_medida_fin %} disabled {% endif %} >
+                        </td>
+                        <td>
+                            {{ equivalencia.unidad_medida_fin }}
+                        </td>
+                        <td>
+                            {{ equivalencia.itemunidadmedida }}
+                        </td>
+                        <td style="text-align: center">
+                            <a href="javascript:;" id='vigente_{{ equivalencia.id }}'
+                               onclick="eliminar({{ equivalencia.id }})">
+                                {% if equivalencia.status %}
+                                    <i class="fa fa-check text-success" data-toggle="tooltip"
+                                       data-original-title="Desactivar" data-placement="bottom">
+                                    </i>
+                                {% else %}
+                                    <i class="fa fa-times text-danger" data-toggle="tooltip"
+                                       data-original-title="Activar" data-placement="bottom">
+                                    </i>
+                                {% endif %}
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% load humanize %}
+<div class="table-responsive">
+    <table class="table table-sm">
+        <thead>
+        <tr>
+            <th style="text-align: center; font-weight: bold; width: 90px;">Sucursal</th>
+            <th style="text-align: center; font-weight: bold; width: 70px;">Nombre</th>
+            <th style="text-align: center; font-weight: bold; width: 70px;">Estado</th>
+            <th style="text-align: center; font-weight: bold; width: 70px;">Fecha asignación</th>
+            <th style="text-align: center; font-weight: bold; width: 70px;">Usuario asignación</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for detalle in vendedor.obtener_todas_sucursales %}
+            <tr>
+                <td style="text-align: center">{{ detalle.sucursal }}</td>
+                <td style="text-align: justify">{{ detalle.nombre }}</td>
+                <td style="text-align: center">
+                    {% if detalle.status %}
+                        <span class="text-success"><b>ACTIVO</b></span>
+                    {% else %}
+                        <span class="text-danger"><b>INACTIVO</b></span>
+                    {% endif %}
+                </td>
+                <td style="text-align: center">{{ detalle.fecha_ins|date:'d-m-Y' }}</td>
+                <td style="text-align: center">{{ detalle.user_ins }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>

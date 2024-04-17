@@ -1,0 +1,342 @@
+{% extends "index.html" %}
+{% load extras %}
+{% block cabecera %}
+    <script type="text/javascript" src="/static/js/jquery.isloading.min.js"></script>
+    <link href="/static/css/table-responsive.css?1.0.0" type="text/css" rel="stylesheet"/>
+    <script type='text/javascript' src="/static/js/form.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            busquedabi = function () {
+                var fecha = $("#fecha").val();
+                var term = $("#searchinput").val().trim().toUpperCase();
+                let href = "{{ request.path }}?s=" + term + "&fecha=" + fecha;
+                location.href = href;
+                return false;
+            };
+            $('#searchinput').keyup(function (e) {
+                if (e.keyCode == 13) {
+                    busquedabi();
+                }
+            });
+
+            $("#fecha").addClass('selectorfecha').datepicker({format: "dd-mm-yyyy"}).on('changeDate', function (ev) {
+                $(this).datepicker('hide');
+                busquedabi();
+            });
+
+             $(".table").on('click', '.detalleFormaPago', function () {
+                var id = $(this).attr("id");
+                bloquearpantalla();
+                $.ajax({
+                    type: "POST",
+                    url: "/facturacion",
+                    data: {'action': 'detalleformapago', 'id': id},
+                    success: function (data) {
+                        $.unblockUI();
+                        if (data.result == 'ok') {
+                            $("#bodymodaldetalle").empty();
+                            $("#bodymodaldetalle").append(data.html);
+                            $("#modaldetalle").modal("show");
+                        } else {
+                            Swal.fire({text: data.mensaje});
+                        }
+                    },
+                    error: function () {
+                        $.unblockUI();
+                        Swal.fire({text: "Error de conexión."});
+                    },
+                    dataType: "json"
+                });
+                return false;
+            });
+             $(".table").on('click', '.detalleProductos', function () {
+                var id = $(this).attr("idf");
+                bloquearpantalla();
+                $.ajax({
+                    type: "POST",
+                    url: "/facturacion",
+                    data: {'action': 'detalleProductos', 'id': id},
+                    success: function (data) {
+                        $.unblockUI();
+                        if (data.result == 'ok') {
+                            $("#bodymodaldetalle").empty();
+                            $("#bodymodaldetalle").append(data.html);
+                            $("#modaldetalle").modal("show");
+                        } else {
+                            Swal.fire({text: data.mensaje});
+                        }
+                    },
+                    error: function () {
+                        $.unblockUI();
+                        Swal.fire({text: "Error de conexión."});
+                    },
+                    dataType: "json"
+                });
+                return false;
+            });
+            $(".table").on('change', '.estado_pago_factura_cbo', function () {
+                var control = $(this);
+                var id = $(this).attr('idfv');
+                if (id > 0) {
+                    bloquearpantalla();
+                    $.ajax({
+                        type: "POST",
+                        url: "/facturacion",
+                        data: {'action': 'cambia_estado_pago_factura', 'id': id, csrfmiddlewaretoken: '{{ csrf_token }}'},
+                        success: function (data) {
+                            $.unblockUI();
+                            if (data.result == 'ok') {
+                                Swal.fire("Estado cambiado");
+                            } else {
+                                control.val(0).trigger("change");
+                                Swal.fire({text:data.mensaje});
+                            }
+                        },
+                        error: function () {
+                            $.unblockUI();
+                            control.val(0).trigger("change");
+                            Swal.fire({text:"Error de conexion."});
+                        },
+                        dataType: "json"
+                    });
+                }
+            });
+
+        });
+
+        function formModal(id, text, action) {
+            bloquearpantalla();
+            $.ajax({
+                type: "GET",
+                url: `{{ request.path }}`,
+                data: {
+                    'action': action,
+                    'id': id,
+                },
+                success: function (data) {
+                    if (data.result === true) {
+                        $.unblockUI();
+                        $('.panelbody').html(data.data);
+                        $('#itemspanel .paneltitle').html(text);
+                        $("#itemspanel").modal({backdrop: 'static', width: '900px'}).modal('show');
+                    } else {
+                        $.unblockUI();
+                        alertaDanger(data.message);
+                    }
+                },
+                error: function () {
+                    $.unblockUI();
+                    alertaDanger("Error de conexión.");
+                },
+                dataType: "json"
+            });
+        }
+        $(document).on('click', '.close-modal', function () {
+            $(this).parents(".modal").modal("hide");
+        });
+    </script>
+{% endblock %}
+{% block atras-titulo %}
+    <div class="section-header-back">
+        <div class="row">
+            <div class="col-1">
+                <a href="/" class="btn btn-light btn-icon-split">
+                        <span class="icon text-white-50">
+                            <i class="fas fa-arrow-left"></i>
+                        </span>
+                </a>
+            </div>
+            <div class="col-11">
+                <h6 class="m-0 font-weight-bold text-primary">{{ title }}</h6>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block cuerpo %}
+    <div class="card-header py-3">
+        <div class="row">
+            <div class="col-2">
+                <a href="/facturacion?action=addfactura" class="btn btn-success btn-icon-split">
+                    <span class="icon text-white-50">
+                                            <i class="fas fa-plus-circle"></i>
+                                        </span>
+                    <span class="text">Agregar</span>
+                </a>
+            </div>
+            <div class="col-1">
+                <div class="input-group-append">
+                    <a class="btn color-purple-icon" href="javascript:void(0);" onclick="busquedabi()"
+                       id="button-addon2"><i
+                            class="fa fa-search"></i></a>
+                    {% if s or m or id %}
+                        <a title="Ver todo" href="{{ request.path }}"
+                           class="btn color-purple-icon  tr cleartext"><i
+                                class="fas fa-sync-alt"></i></a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-9">
+                <input type="text" class="form-control search backgroud-busq" id='searchinput'
+                       placeholder="Buscar por, código, cliente, vendedor"
+                       aria-label="Buscar" aria-describedby="button-addon2" name="s" value="{{ s }}">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-2">
+                        <div class="form-group  text-right">
+                            <input type="text" placeholder="Fecha emisión factura" class="form-control" id="fecha" autocomplete="off" value="{{ fecha|date:'d-m-Y' }}" style="border-radius: 0.2rem;">
+                        </div>
+                    </div>
+            </div>
+        </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>Fecha</th>
+                    <th>Cliente/CI-RUC</th>
+                    <th>Vendedor/Sucursal</th>
+                    <th>Form. Pago</th>
+                    <th>Estado</th>
+                    <th>Cant. Productos</th>
+                    <th>Detalles</th>
+                    <th style="text-align: center;width: 120px;">Opciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for factura in facturas %}
+                    <tr>
+                        <td>
+                            {{ factura.codigo }}
+                        </td>
+                        <td>{{ factura.fechafactura|date:'d-m-Y' }} {{ factura.fechafactura|time:'h:i a' }}</td>
+                        <td>
+                            {{ factura.cliente }}<br>
+                            {{ factura.cliente.identificacion }}
+                        </td>
+                        <td>
+                            {{ factura.vendedor }}
+                        </td>
+                        <td class="text-center">
+                            <a class="btn btn-warning btn-sm detalleFormaPago"
+                               href="javascript:;"
+                               data-original-title="Detalles Forma pago"
+                               data-toggle="tooltip"
+                               data-placement="top"
+                               id="{{ factura.id }}"><i class='fa fa-list'></i></a>
+                        </td>
+                        <td class="text-center">
+                            {% if usuario.is_superuser %}
+                                {% if not factura.valida %}
+                                    <span class="badge badge-danger">Anulada</span>
+                                {% else %}
+                                    <select class="estado_pago_factura_cbo" idfv="{{ factura.id }}">
+                                        <option value="1" {% if factura.pagada %} selected {% endif %}>Pagado</option>
+                                        <option value="0" {% if not factura.pagada %} selected {% endif %}>Falta Pago</option>
+                                    </select>
+                                {% endif %}
+                            {% else %}
+                                {% if not factura.valida %}
+                                    <span class="badge badge-danger">Anulada</span>
+                                {% else %}
+                                    {% if factura.pagada %}
+                                        <span class="badge badge-success">Pagado</span>
+                                    {% else %}
+                                        <span class="badge badge-warning">Falta Pago</span>
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <a target="_blank" class="btn btn-warning btn-sm detalleProductos"
+                            href="javascript:;"
+                               data-toggle="tooltip"
+                               data-placement="right"
+                               data-original-title="Detalle factura"
+                               idf="{{ factura.id }}">
+                                <i>Cant: {{ factura.cantidad_productos }} </i>
+                            </a>
+                        </td>
+                        <td>
+                            <b>Subtotal IVA: </b> {{ factura.subtotal_doce }}<br>
+                            <b>Subtotal 0</b>{{ factura.subtotal_cero }}<br>
+                            <b>Sub total</b>{{ factura.subtotal }}<br>
+                            <b>IVA</b>{{ factura.valorimpuesto }}<br>
+                            <b>Descuento</b>{{ factura.valordescuento }}<br>
+                            <b>Total</b>{{ factura.total }}
+                        </td>
+                        <td style="text-align: center;">
+                            <div class="btn-group">
+                                    <a target="_blank" class="btn btn-sm btn-success"
+                                       href='/facturacion?action=imprimir_factura&id={{ factura.id }}'
+                                       data-toggle="tooltip"
+                                       data-placement="top"
+                                       data-original-title="Imprimir Factura A6">
+                                        <i class="fa fa-print"></i>
+                                    </a>
+{#                                {% if not factura.en_uso and factura.valida  %}#}
+{#                                    {% if usuario.is_superuser %}#}
+{#                                        <a class="btn btn-danger btn-sm"#}
+{#                                           href='/facturacion?action=anular&id={{ factura.id }}'#}
+{#                                           data-toggle="tooltip"#}
+{#                                           data-placement="bottom"#}
+{#                                           data-original-title="Anular">#}
+{#                                            <i class="fas fa-ban"></i>#}
+{#                                        </a>#}
+{#                                    {% elif hoy == factura.fechafactura.date %}#}
+{#                                        <a class="btn btn-danger btn-sm"#}
+{#                                           href='/facturacion?action=anular&id={{ factura.id }}'#}
+{#                                           data-toggle="tooltip"#}
+{#                                           data-placement="bottom"#}
+{#                                           data-original-title="Anular">#}
+{#                                            <i class="fas fa-ban"></i>#}
+{#                                        </a>#}
+{#                                    {% endif %}#}
+{#                                {% endif %}#}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="16">
+                            No existen registros
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer border-top-0">
+        {% include 'paginacion.html' %}
+    </div>
+    <div class="modal fade static" id="itemspanel">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document" id="wmodal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4><b class="paneltitle">FORMULARIO MODAL</b></h4>
+                </div>
+                <div class="modal-body" style="padding: 1.5%;">
+                    <form class="form-horizontal form-modal" autocomplete="off" method="post"
+                          enctype="multipart/form-data" action="{{ request.path }}">
+                        {% csrf_token %}
+                        <div class="row panelbody">
+                        </div>
+                        <div class="modal-footer" id="footermodal">
+                            <div style="text-align: right; float: left; width: 100%">
+                                <button type="submit" id="submit" class="btn btn-success"><i
+                                        class="fa fa-check-circle"></i> Guardar
+                                </button>
+                                <button type="button" class="btn btn-danger close-modal"><i
+                                        class="fa fa-times-circle"></i> Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

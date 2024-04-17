@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+{% load extras %}
+<html lang="en">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Clases</title>
+
+    <!-- Custom fonts for this template-->
+    <link href="/static/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link
+            href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
+            rel="stylesheet">
+
+    <!-- Custom styles for this template-->
+    <link href="/static/css/sb-admin-2.min.css" rel="stylesheet">
+    <!-- Bootstrap core JavaScript-->
+    <script src="/static/js/jquery/jquery.min.js"></script>
+    <script src="/static/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Core plugin JavaScript-->
+    <script src="/static/jquery-easing/jquery.easing.min.js"></script>
+
+    {#    <script type='text/javascript' src='/static/js/jquery.dataTables.min.js?4.0.0'></script>#}
+    <script src="/static/js/datatables/jquery.dataTables.min.js"></script>
+    <script src="/static/js/datatables/dataTables.bootstrap4.min.js"></script>
+    <link href="/static/sweet2/sweetalert2.css?2.0.3" rel="stylesheet"/>
+    <script src="/static/sweet2/sweetalert2.js?1.0.1"></script>
+    <script type='text/javascript' src="/static/js/jquery.blockUI.js?v=2.71.0"></script>
+    <script type='text/javascript' src="/static/js/sysend.js?4.0.0"></script>
+    <script type="text/javascript" src="/static/js/select2.js?v=1.0.0"></script>
+    <link type="text/css" rel="stylesheet" href="/static/css/select2.css?v=1.1.3">
+    <link href="/static/css/datepicker.css?1.0.0" rel='stylesheet'/>
+    <script type='text/javascript' src="/static/js/bootstrap-datepicker.js?1.0.0"></script>
+    <script type="text/javascript">
+
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        var csrftoken = getCookie('csrftoken');
+
+        function csrfSafeMethod(method) {
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+
+        $.ajaxSetup({
+            beforeSend: function (xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+
+        $(function () {
+
+
+            bloquearpantalla = function () {
+                if (!$(".blockUI").length) {
+                    $.blockUI({
+                        message: $('#throbber'),
+                        css: {
+                            backgroundColor: 'transparent',
+                            border: '0',
+                            zIndex: 9999999
+                        },
+                        overlayCSS: {
+                            backgroundColor: '#fff',
+                            opacity: 0.8,
+                            zIndex: 9999990
+                        }
+                    });
+                }
+            };
+            Confirm = {
+                question: function (question, fun_yes/*=null*/, fun_no/*=null*/) {
+                    var $popup = $('#modalConfirm');
+
+                    $popup.modal({backdrop: 'static', keyboard: false}).modal('show');
+
+                    $('.modal-body p', $popup).html(question);
+
+                    $('.action_yes', $popup).off('click').on('click', function () {
+                        if (typeof fun_yes != 'undefined') {
+                            fun_yes();
+                        }
+                        $popup.modal('hide');
+                    });
+
+                    $('.action_not', $popup).off('click').on('click', function () {
+                        if (typeof fun_no != 'undefined') {
+                            fun_no();
+                        }
+                        $popup.modal('hide');
+                    });
+                },
+                ajax: function (aData, fun_yes/*=null*/, fun_no/*=null*/) {
+                    var d = {"action": "deleteView"}
+                    $.each(aData, function (index, value) {
+                        d[index] = value
+                    });
+                    aData = d
+                    bloquearpantalla();
+                    var $popup = $('#modalConfirmAjax');
+                    $.ajax({
+                        type: "GET",
+                        url: "/data",
+                        data: aData,
+                        success: function (data) {
+                            if (data.result == 'ok') {
+                                $('.modal-body', $popup).html(data.html);
+                                var h = $(window).height() - 350;
+                                $popup.modal({backdrop: 'static', keyboard: false, width: "60%", height: h}).modal('show');
+                                $('.action_yes', $popup).off('click').on('click', function () {
+                                    if (typeof fun_yes != 'undefined') {
+                                        fun_yes();
+                                    }
+                                    $popup.modal('hide');
+                                });
+
+                                $('.action_not', $popup).off('click').on('click', function () {
+                                    if (typeof fun_no != 'undefined') {
+                                        fun_no();
+                                    }
+                                    $popup.modal('hide');
+                                });
+                            } else {
+                                alertaSuccess(data.mensaje);
+                            }
+                            $.unblockUI();
+                        },
+                        error: function () {
+                            $.unblockUI();
+                            alertaDanger("Error al enviar los datos.");
+                        },
+                        dataType: "json",
+                    });
+                },
+
+            };
+            tipo_formulario = function (elemento) {
+                if (elemento.attr('formtype') == 'form-vertical') {
+                    elemento.find(".control-label").css({'float': 'none'});
+                    elemento.find(".label-text").css({'text-align': 'left'});
+                    elemento.find(".control-label").each(function () {
+                        var contenedor = parseFloat($(this).parent().css('width')) - 5;
+                        $(this).css({'width': contenedor.toString() + 'px'});
+                    });
+                    elemento.find(".control").each(function () {
+                        var contenedor = parseFloat($(this).parent().css('width')) - 5;
+                        $(this).css({'width': contenedor.toString() + 'px'});
+                    });
+
+                } else {
+                    elemento.find(".control-label").css({'float': 'left'});
+                    elemento.find(".label-text").css({'text-align': 'right'});
+                    if (elemento.hasClass('form-modal')) {
+                        elemento.find(".control-group").each(function () {
+                            var contenedor = parseFloat($(this).parent().width());
+                            var porciento = (parseFloat($(this).width()) / 100);
+                            var tam = parseInt(contenedor * porciento);
+                            $(this).css({'width': tam});
+                        });
+                    }
+                    elemento.find(".control-label").each(function () {
+                        if ($(this).attr('labelwidth')) {
+                            $(this).css({'width': $(this).attr('labelwidth')});
+                        } else {
+                            $(this).css({'width': '160px'});
+                        }
+                    });
+                    elemento.find(".control").each(function () {
+                        var contenedor = $(this).parent().width();
+                        var label = parseFloat($(this).parent().find('.control-label').width());
+                        $(this).css({'width': ((contenedor - label) - 20).toString() + 'px'});
+                    });
+                }
+            };
+            {% if messages %}
+                {% for message in messages %}
+                    console.log(`{{ message }}`)
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        type: '{% if message.tags %}{{ message.tags }}{% endif %}',
+                        title: `{{ message }}`,
+                        showConfirmButton: false,
+                        timer: 8000
+                    })
+                    var swal2Content = document.querySelector('.swal2-content');
+                    swal2Content.remove();
+                {% endfor %}
+            {% endif %}
+            $(".btn-form").click(function () {
+                bloquearpantalla();
+            });
+
+            $(".bloqueo_pantalla").click(function () {
+                bloquearpantalla();
+            });
+        })
+        function alertaSuccess(mensaje, time = 5000) {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                type: 'success',
+                title: mensaje,
+                showConfirmButton: false,
+                timer: time
+            })
+        }
+
+        function alertaWarning(mensaje, time = 5000) {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                type: 'warning',
+                title: mensaje,
+                showConfirmButton: false,
+                timer: time
+            })
+        }
+
+        function alertaDanger(mensaje, time = 5000) {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                type: 'error',
+                title: mensaje,
+                showConfirmButton: false,
+                timer: time
+            })
+        }
+
+        function alertaInfo(mensaje, time = 5000) {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                type: 'info',
+                title: mensaje,
+                showConfirmButton: false,
+                timer: time
+            })
+        }
+        function eliminarajax(pk, nombre, accion, url = '{{ request.path }}', titulo = 'Estás por eliminar este registro:') {
+            Swal.fire({
+                html: `<b>${titulo}</b> ${nombre}`,
+                text: "Esta acción es irreversible",
+                type: 'info',
+                showCancelButton: true,
+                allowOutsideClick: false,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Si, deseo hacerlo',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.value) {
+                    bloquearpantalla();
+                    $.ajax({
+                        type: 'POST',
+                        url: '{{ reques.path }}',
+                        async: false,
+                        data: {
+                            csrfmiddlewaretoken: '{{ csrf_token }}',
+                            action: accion,
+                            id: pk,
+                        },
+                        dataType: "json",
+                        beforeSend: function () {
+                            bloquearpantalla();
+                        }
+                    }).done(function (data) {
+                        $.unblockUI;
+                        if (data.error === false) {
+                            location.reload();
+                        } else {
+                            alertaDanger(data.message)
+                        }
+                    }).fail(function (jqXHR, textStatus, errorThrown) {
+                        setTimeout($.unblockUI, 1);
+                        alertaDanger('Error en el servidor', 'Advertencia!', 10000);
+                    }).always(function () {
+                    });
+                } else {
+                }
+            })
+        }
+    </script>
+    {% block cabecera %}
+    {% endblock %}
+
+</head>
+
+<body id="page-top">
+
+<!-- Page Wrapper -->
+<div id="wrapper">
+
+    <!-- Sidebar -->
+    <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+
+        <!-- Sidebar - Brand -->
+        <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
+            <div class="sidebar-brand-icon rotate-n-15">
+                <i class="fas fa-laugh-wink"></i>
+            </div>
+            <div class="sidebar-brand-text mx-3">Admin</div>
+        </a>
+
+        <!-- Divider -->
+        <hr class="sidebar-divider my-0">
+
+        <!-- Nav Item - Dashboard -->
+        <li class="nav-item active">
+            <a class="nav-link" href="index.html">
+                <i class="fas fa-fw fa-tachometer-alt"></i>
+                <span>Dashboard</span></a>
+        </li>
+
+        <!-- Divider -->
+        <hr class="sidebar-divider">
+
+        <!-- Heading -->
+        <div class="sidebar-heading">
+            Interface
+        </div>
+
+
+        {% for modulo in modulos %}
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapse{{ modulo.id }}"
+                   aria-expanded="true" aria-controls="collapseTwo">
+                    <i class="{{ modulo.icono }}"></i>
+                    <span>{{ modulo.nombre }}</span>
+                </a>
+                <div id="collapse{{ modulo.id }}" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <h6 class="collapse-header">{{ modulo.descripcion }}</h6>
+                        {% if misopciones %}
+                            {% with opciones=modulo|args:misopciones|call:"misopciones" %}
+                                {% for opcion in opciones %}
+                                    <a class="collapse-item" href="{{ opcion.url }}">{{ opcion.nombre }}</a>
+                                {% endfor %}
+                            {% endwith %}
+                        {% else %}
+                            {% for opcion in modulo.opciones %}
+                                <a class="collapse-item" href="{{ opcion.url }}">{{ opcion.nombre }}</a>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+
+            </li>
+        {% endfor %}
+
+        <!-- Divider -->
+        <hr class="sidebar-divider">
+
+    </ul>
+    <!-- End of Sidebar -->
+
+    <!-- Content Wrapper -->
+    <div id="content-wrapper" class="d-flex flex-column">
+
+        <!-- Main Content -->
+        <div id="content">
+
+            <!-- Topbar -->
+            <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+                <!-- Sidebar Toggle (Topbar) -->
+
+
+
+                <!-- Topbar Navbar -->
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item dropdown">
+                       <button type="button" id="sidebarToggleTop" class="btn btn-link rounded-circle mr-3">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <form class="">
+                            <div class="input-group">
+                                <select class="form-control form-control-sm" id="id_sucursal">
+                                    {% for sucursal in sucursales %}
+                                        <option {% if sucursal.id == sucursalsesion.id %} selected {% endif %}
+                                                                                          value="{{ sucursal.id }}">{{ sucursal }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </form>
+                    </li>
+                </ul>
+
+                <ul class="navbar-nav ml-auto">
+                    <!-- Nav Item - User Information -->
+                    <li class="nav-item dropdown no-arrow">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span class="mr-2 d-none d-lg-inline text-gray-600 small">Douglas McGee</span>
+                            <img class="img-profile rounded-circle"
+                                 src="img/undraw_profile.svg">
+                        </a>
+                        <!-- Dropdown - User Information -->
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
+                             aria-labelledby="userDropdown">
+                            <a class="dropdown-item" href="#">
+                                <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                                Perfil
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="/logout" >
+                                <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                                Salir
+                            </a>
+                        </div>
+                    </li>
+
+                </ul>
+
+            </nav>
+            <!-- End of Topbar -->
+
+            <!-- Begin Page Content -->
+            <div class="container-fluid">
+
+                <!-- Content Row -->
+
+                <div class="row">
+
+                    <!-- Area Chart -->
+                    <div class="col-xl-12 col-lg-12">
+                        {% block atras-titulo %}
+                        {% endblock %}
+                        <div class="card shadow mb-4">
+                            {% block cuerpo %}{% endblock %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /.container-fluid -->
+        </div>
+        <!-- End of Main Content -->
+        <!-- Footer -->
+        <footer class="sticky-footer bg-white">
+            <div class="container my-auto">
+                <div class="copyright text-center my-auto">
+                    <span>Copyright &copy; Your Website 2024</span>
+                </div>
+            </div>
+        </footer>
+        <!-- End of Footer -->
+
+    </div>
+    <!-- End of Content Wrapper -->
+
+</div>
+
+<div class="modal fade" id="modaldetalle" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Detalle de Registros</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="bodymodaldetalle">
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<a class="scroll-to-top rounded" href="#page-top">
+    <i class="fas fa-angle-up"></i>
+</a>
+
+<div id="throbber" style="display: none">
+    <img src="/static/images/cargando.gif" style=" margin: -110px;"/>
+</div>
+
+
+    <!-- Custom scripts for all pages-->
+    <script src="/static/js/sb-admin-2.js"></script>
+</body>
+
+</html>

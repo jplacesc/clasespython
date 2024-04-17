@@ -1,0 +1,26 @@
+<div class="table-responsive">
+    <table class="table table-sm table-striped compact">
+        <thead>
+        <tr>
+            <th style="text-align: center; font-weight: bold; width: 90px;">Forma pago</th>
+            <th style="text-align: center; font-weight: bold; width: 70px;">Valor</th>
+            <th style="text-align: center; font-weight: bold; width: 70px;">Observación</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for detalle in facturaventa.obtener_forma_pago %}
+            <tr>
+                <td style="text-align: justify">
+                    {%  if detalle.formapago %}
+                    {{ detalle.formapago }}
+                    {% else %}
+                        {{ detalle.notacredito }}
+                    {% endif %}
+                </td>
+                <td style="text-align: center">{{ detalle.valor }}</td>
+                <td style="text-align: justify">{{ detalle.observacion }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>

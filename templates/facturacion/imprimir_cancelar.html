@@ -1,0 +1,90 @@
+{% extends "index.html" %}
+{% load extras %}
+{% block cabecera %}
+    <script type="text/javascript" src="/static/js/jquery.isloading.min.js"></script>
+    <link href="/static/css/table-responsive.css?1.0.0" type="text/css" rel="stylesheet"/>
+    <script type='text/javascript' src="/static/js/form.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            busquedabi = function () {
+                var term = $("#searchinput").val().trim().toUpperCase();
+                let href = "{{ request.path }}?s=" + term;
+                location.href = href;
+            };
+            $('#searchinput').keyup(function (e) {
+                if (e.keyCode == 13) {
+                    busquedabi();
+                }
+            });
+        });
+
+        function formModal(id, text, action) {
+            bloquearpantalla();
+            $.ajax({
+                type: "GET",
+                url: `{{ request.path }}`,
+                data: {
+                    'action': action,
+                    'id': id,
+                },
+                success: function (data) {
+                    if (data.result === true) {
+                        $.unblockUI();
+                        $('.panelbody').html(data.data);
+                        $('#itemspanel .paneltitle').html(text);
+                        $("#itemspanel").modal({backdrop: 'static', width: '900px'}).modal('show');
+                    } else {
+                        $.unblockUI();
+                        alertaDanger(data.message);
+                    }
+                },
+                error: function () {
+                    $.unblockUI();
+                    alertaDanger("Error de conexión.");
+                },
+                dataType: "json"
+            });
+        }
+
+        $(document).on('click', '.close-modal', function () {
+            $(this).parents(".modal").modal("hide");
+        });
+    </script>
+{% endblock %}
+{% block atras-titulo %}
+    <div class="section-header-back">
+        <div class="row">
+            <div class="col-1">
+                <a href="/facturacion?action=addfactura" class="btn btn-light btn-icon-split">
+                        <span class="icon text-white-50">
+                            <i class="fas fa-arrow-left"></i>
+                        </span>
+                </a>
+            </div>
+            <div class="col-11">
+                <h6 class="m-0 font-weight-bold text-primary">{{ title }}</h6>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block cuerpo %}
+    <div class="card-header py-3">
+        <div class="row">
+            {{ factura }}
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row justify-content-center">
+            <div class="col-lg-2 col-md-12 col-sm-12 mb-2">
+                <a class="btn btn-success btn-block" href="/facturacion?action=imprimir_factura&id={{ factura.id }}">
+                    <i class="fa fa-print"></i> Imprimir
+                </a>
+            </div>
+            <div class="col-lg-2 col-md-12 col-sm-12 mb-2">
+                <a href="/facturacion?action=addfactura" class="btn btn-warning btn-block">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

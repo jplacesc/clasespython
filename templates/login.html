@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Login</title>
+
+    <!-- Custom fonts for this template-->
+    <link href="/static/css/sb-admin-2.min.css" type="text/css" rel="stylesheet">
+
+    <link href="/static/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link
+        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
+        rel="stylesheet">
+
+    <script src="/static/js/jquery/jquery-3.7.1.min.js"></script>
+     <script src="/static/bootstrap/js/bootstrap.bundle.min.js"></script>
+     <script src="/static/js/sb-admin-2.min.js"></script>
+
+</head>
+
+<body class="bg-gradient-primary">
+
+    <div class="container">
+
+        <!-- Outer Row -->
+        <div class="row justify-content-center">
+
+            <div class="col-xl-10 col-lg-12 col-md-9">
+
+                <div class="card o-hidden border-0 shadow-lg my-5">
+                    <div class="card-body p-0">
+                        <!-- Nested Row within Card Body -->
+                        <div class="row">
+                            <div class="col-lg-6 d-none d-lg-block bg-login-image"></div>
+                            <div class="col-lg-6">
+                                <div class="p-5">
+                                    <div class="text-center">
+                                        <h1 class="h4 text-gray-900 mb-4">Bienvenido!</h1>
+                                    </div>
+                                    <form class="user">
+                                        <div class="form-group">
+                                            <input type="email" class="form-control form-control-user"
+                                                id="username" aria-describedby="emailHelp"
+                                                placeholder="Usuario">
+                                        </div>
+                                        <div class="form-group">
+                                            <input type="password" class="form-control form-control-user"
+                                                id="password" placeholder="Clave">
+                                        </div>
+                                        <a href="#" id="login" class="btn btn-primary btn-user btn-block">
+                                            Login
+                                        </a>
+                                        <hr>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+    <!-- Bootstrap core JavaScript-->
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var mobile=false;
+            clienteinfo = function(window) {
+                {
+                    var unknown = '-';
+
+                    // screen
+                    var screenSize = '';
+                    if (screen.width) {
+                        width = (screen.width) ? screen.width : '';
+                        height = (screen.height) ? screen.height : '';
+                        screenSize += '' + width + " x " + height;
+                    }
+
+                    // browser
+                    var nVer = navigator.appVersion;
+                    var nAgt = navigator.userAgent;
+                    var browser = navigator.appName;
+                    var version = '' + parseFloat(navigator.appVersion);
+                    var majorVersion = parseInt(navigator.appVersion, 10);
+                    var nameOffset, verOffset, ix;
+
+                    // Opera
+                    if ((verOffset = nAgt.indexOf('Opera')) != -1) {
+                        browser = 'Opera';
+                        version = nAgt.substring(verOffset + 6);
+                        if ((verOffset = nAgt.indexOf('Version')) != -1) {
+                            version = nAgt.substring(verOffset + 8);
+                        }
+                    }
+                    // Opera Next
+                    if ((verOffset = nAgt.indexOf('OPR')) != -1) {
+                        browser = 'Opera';
+                        version = nAgt.substring(verOffset + 4);
+                    }
+                    // MSIE
+                    else if ((verOffset = nAgt.indexOf('MSIE')) != -1) {
+                        browser = 'Microsoft Internet Explorer';
+                        version = nAgt.substring(verOffset + 5);
+                    }
+                    // Chrome
+                    else if ((verOffset = nAgt.indexOf('Chrome')) != -1) {
+                        browser = 'Chrome';
+                        version = nAgt.substring(verOffset + 7);
+                    }
+                    // Safari
+                    else if ((verOffset = nAgt.indexOf('Safari')) != -1) {
+                        browser = 'Safari';
+                        version = nAgt.substring(verOffset + 7);
+                        if ((verOffset = nAgt.indexOf('Version')) != -1) {
+                            version = nAgt.substring(verOffset + 8);
+                        }
+                    }
+                    // Firefox
+                    else if ((verOffset = nAgt.indexOf('Firefox')) != -1) {
+                        browser = 'Firefox';
+                        version = nAgt.substring(verOffset + 8);
+                    }
+                    // MSIE 11+
+                    else if (nAgt.indexOf('Trident/') != -1) {
+                        browser = 'Microsoft Internet Explorer';
+                        version = nAgt.substring(nAgt.indexOf('rv:') + 3);
+                    }
+                    // Other browsers
+                    else if ((nameOffset = nAgt.lastIndexOf(' ') + 1) < (verOffset = nAgt.lastIndexOf('/'))) {
+                        browser = nAgt.substring(nameOffset, verOffset);
+                        version = nAgt.substring(verOffset + 1);
+                        if (browser.toLowerCase() == browser.toUpperCase()) {
+                            browser = navigator.appName;
+                        }
+                    }
+                    // trim the version string
+                    if ((ix = version.indexOf(';')) != -1) version = version.substring(0, ix);
+                    if ((ix = version.indexOf(' ')) != -1) version = version.substring(0, ix);
+                    if ((ix = version.indexOf(')')) != -1) version = version.substring(0, ix);
+
+                    majorVersion = parseInt('' + version, 10);
+                    if (isNaN(majorVersion)) {
+                        version = '' + parseFloat(navigator.appVersion);
+                        majorVersion = parseInt(navigator.appVersion, 10);
+                    }
+
+                    // mobile version
+                    mobile = /Mobile|mini|Fennec|Android|iP(ad|od|hone)/.test(nVer);
+                    console.log(mobile);
+                    // cookie
+                    var cookieEnabled = (navigator.cookieEnabled) ? true : false;
+
+                    if (typeof navigator.cookieEnabled == 'undefined' && !cookieEnabled) {
+                        document.cookie = 'testcookie';
+                        cookieEnabled = (document.cookie.indexOf('testcookie') != -1) ? true : false;
+                    }
+
+                    // system
+                    var os = unknown;
+                    var clientStrings = [
+                        {s:'Windows 10', r:/(Windows 10.0|Windows NT 10.0)/},
+                        {s:'Windows 8.1', r:/(Windows 8.1|Windows NT 6.3)/},
+                        {s:'Windows 8', r:/(Windows 8|Windows NT 6.2)/},
+                        {s:'Windows 7', r:/(Windows 7|Windows NT 6.1)/},
+                        {s:'Windows Vista', r:/Windows NT 6.0/},
+                        {s:'Windows Server 2003', r:/Windows NT 5.2/},
+                        {s:'Windows XP', r:/(Windows NT 5.1|Windows XP)/},
+                        {s:'Windows 2000', r:/(Windows NT 5.0|Windows 2000)/},
+                        {s:'Windows ME', r:/(Win 9x 4.90|Windows ME)/},
+                        {s:'Windows 98', r:/(Windows 98|Win98)/},
+                        {s:'Windows 95', r:/(Windows 95|Win95|Windows_95)/},
+                        {s:'Windows NT 4.0', r:/(Windows NT 4.0|WinNT4.0|WinNT|Windows NT)/},
+                        {s:'Windows CE', r:/Windows CE/},
+                        {s:'Windows 3.11', r:/Win16/},
+                        {s:'Android', r:/Android/},
+                        {s:'Open BSD', r:/OpenBSD/},
+                        {s:'Sun OS', r:/SunOS/},
+                        {s:'Linux', r:/(Linux|X11)/},
+                        {s:'iOS', r:/(iPhone|iPad|iPod)/},
+                        {s:'Mac OS X', r:/Mac OS X/},
+                        {s:'Mac OS', r:/(MacPPC|MacIntel|Mac_PowerPC|Macintosh)/},
+                        {s:'QNX', r:/QNX/},
+                        {s:'UNIX', r:/UNIX/},
+                        {s:'BeOS', r:/BeOS/},
+                        {s:'OS/2', r:/OS\/2/},
+                        {s:'Search Bot', r:/(nuhk|Googlebot|Yammybot|Openbot|Slurp|MSNBot|Ask Jeeves\/Teoma|ia_archiver)/}
+                    ];
+                    for (var id in clientStrings) {
+                        var cs = clientStrings[id];
+                        if (cs.r.test(nAgt)) {
+                            os = cs.s;
+                            break;
+                        }
+                    }
+
+                    var osVersion = unknown;
+
+                    if (/Windows/.test(os)) {
+                        osVersion = /Windows (.*)/.exec(os)[1];
+                        os = 'Windows';
+                    }
+
+                    switch (os) {
+                        case 'Mac OS X':
+                            osVersion = /Mac OS X (10[\.\_\d]+)/.exec(nAgt)[1];
+                            break;
+
+                        case 'Android':
+                            osVersion = /Android ([\.\_\d]+)/.exec(nAgt)[1];
+                            break;
+
+                        case 'iOS':
+                            osVersion = /OS (\d+)_(\d+)_?(\d+)?/.exec(nVer);
+                            osVersion = osVersion[1] + '.' + osVersion[2] + '.' + (osVersion[3] | 0);
+                            break;
+                    }
+
+                    // flash (you'll need to include swfobject)
+                    /* script src="//ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js" */
+                    var flashVersion = 'no check';
+                    if (typeof swfobject != 'undefined') {
+                        var fv = swfobject.getFlashPlayerVersion();
+                        if (fv.major > 0) {
+                            flashVersion = fv.major + '.' + fv.minor + ' r' + fv.release;
+                        }
+                        else  {
+                            flashVersion = unknown;
+                        }
+                    }
+                }
+
+                window.jscd = {
+                    screen: screenSize,
+                    browser: browser,
+                    browserVersion: version,
+                    browserMajorVersion: majorVersion,
+                    mobile: mobile,
+                    os: os,
+                    osVersion: osVersion,
+                    cookies: cookieEnabled,
+                    flashVersion: flashVersion
+                };
+            };
+
+            clienteinfo(window);
+            $("#username").on("input", function () {
+                if ($(this).val().length != 0) {
+                    $("#invalid-username").html('').show();
+                }
+            });
+            $("#password").on("input", function () {
+                if ($(this).val().length != 0) {
+                    $("#invalid-password").html('').show();
+                }
+            });
+            $('#username').keyup(function (e) {
+                if (e.keyCode == 13) {
+                    $("#password").focus();
+                }
+            });
+            $('#password').keyup(function (e) {
+                if (e.keyCode == 13) {
+                    $("#login").trigger("click");
+                }
+            });
+            $("#login").click(function () {
+                var usuario = $("#username").val();
+                if (usuario.length == 0) {
+                    $("#invalid-username").html('Debe Ingresar su usuario').show();
+                    $("#username").focus();
+                    return false;
+                }
+                var clave = $("#password").val();
+                if (clave.length == 0) {
+                    $("#invalid-password").html('Debe Ingresar su contraseña').show();
+                    $("#password").focus();
+                    return false;
+                }
+                $("#login").attr({"disabled": "disabled"});
+                console.log("aquiiiiiiiiiiiiiiiiiiiiii");
+                $.ajax({
+                    type: "POST",
+                    url: "/login",
+                    dataType: "json",
+                    data: {"action": "login", "usuario": usuario, "clave": clave, "mobile": mobile},
+                    success: function (data) {
+                        if (data.result == 'ok') {
+                            location.href = "/login";
+                            localStorage.setItem('sessionid', data.sessionid);
+                            window.name = data.sessionid;
+                        } else {
+                            $("#loginform").show();
+                            $("#login").removeAttr('disabled');
+                            $("#invalid-data").html(data.mensaje).show();
+                        }
+                    },
+                    error: function () {
+                        $("#login").removeAttr('disabled');
+                        $("#invalid-data").html('Error al enviar los datos').show();
+                    },
+                });
+            });
+
+
+
+
+            var navegador = jscd.browser +' '+ jscd.browserMajorVersion;
+            var os =  jscd.os +' '+ jscd.osVersion;
+            var cookies = jscd.cookies;
+            var screensize = jscd.screen;
+
+        });
+
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        var csrftoken = getCookie('csrftoken');
+
+        function csrfSafeMethod(method) {
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+
+        $.ajaxSetup({
+            beforeSend: function (xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+    </script>
+
+</body>
+
+</html>
