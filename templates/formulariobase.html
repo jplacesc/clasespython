@@ -5,9 +5,6 @@
     <script type="text/javascript" src='/static/js/jquery.validationEngine-es.js?v=1.0.0'></script>
     <script type="text/javascript">
         $(function () {
-            {% block javascript %}
-            {% endblock %}
-
             $("#form").validationEngine({autoHidePrompt: true, autoHideDelay: 1000});
             envioformulario = function () {
                 var valid = $("form").validationEngine('validate');
@@ -86,79 +83,6 @@
                 $("#" + id + "_select2").html('<option>' + $(this).attr("descripcion") + '</option>').trigger('change');
             })
 
-            numerico = function(elemento, min, max, decimales) {
-                var nvalor;
-                var valor = elemento.val();
-                if (valor==""){
-                    valor = parseFloat(0).toFixed(decimales);
-                    elemento.val(valor);
-                    return;
-                }
-                if (isNaN(valor)){
-                    nvalor = parseFloat(min).toFixed(decimales);
-                    elemento.val(nvalor);
-                    return;
-                }
-                if (valor < min) {
-                    nvalor = parseFloat(min).toFixed(decimales);
-                    elemento.val(nvalor);
-                    return;
-                }
-                if (max>0 && valor>max){
-                    nvalor = parseFloat(max).toFixed(decimales);
-                    elemento.val(nvalor);
-                    return;
-                }
-                nvalor = parseFloat(valor).toFixed(decimales);
-                elemento.val(nvalor);
-            };
-        });
-        $(document).ready(function () {
-            $('.validarclave').keyup(function () {
-                var pswd = $(this).val();
-                var habilitar = true;
-                if (pswd.length < 8) {
-                    $('#length').removeClass('valid').addClass('invalid');
-                    habilitar = false;
-                } else {
-                    $('#length').removeClass('invalid').addClass('valid');
-                }
-                if (pswd.match(/[A-z]/)) {
-                    $('#letter').removeClass('invalid').addClass('valid');
-                } else {
-                    habilitar = false;
-                    $('#letter').removeClass('valid').addClass('invalid');
-                }
-                if (pswd.match(/[A-Z]/) && pswd.match(/[a-z]/)) {
-                    $('#capital').removeClass('invalid').addClass('valid');
-                } else {
-                    habilitar = false;
-                    $('#capital').removeClass('valid').addClass('invalid');
-                }
-                if (pswd.match(/\d/)) {
-                    $('#number').removeClass('invalid').addClass('valid');
-                } else {
-                    habilitar = false;
-                    $('#number').removeClass('valid').addClass('invalid');
-                }
-                if ($("#id_nueva").val().toLowerCase() != $("#id_anterior").val().toLowerCase()) {
-                    $('#igualdad').removeClass('invalid').addClass('valid');
-                } else {
-                    habilitar = false;
-                    $('#igualdad').removeClass('valid').addClass('invalid');
-                }
-                if ($("#id_nueva").val() == $("#id_repetir").val()) {
-                    $('#nuevarepetir').removeClass('invalid').addClass('valid');
-                } else {
-                    habilitar = false;
-                    $('#nuevarepetir').removeClass('valid').addClass('invalid');
-                }
-                if (habilitar) {
-                    $("#botonguardar").show();
-                } else {
-                    $("#botonguardar").hide();
-                }
-            });
         });
     </script>
 {% endblock %}

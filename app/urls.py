@@ -4,7 +4,7 @@ from django.urls import path, include
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.conf.urls.static import static
 from django.urls import re_path
-from app import grupos,vendedor,consulta,producto,view_stock,facturacion
+from app import grupos,vendedor,consulta,producto,view_stock,facturacion,reporteria
 urlpatterns = [
     path('', auth.panel, name='principal'),
     path('login', auth.login_user, name='Loginuser'),
@@ -15,7 +15,8 @@ urlpatterns = [
     path('consulta', consulta.view, name='consulta'),
     path('producto', producto.view, name='producto'),
     path('view_stock', view_stock.view, name='producto'),
-    path('facturacion', facturacion.view, name='facturacion')
+    path('facturacion', facturacion.view, name='facturacion'),
+    path('reporteria', reporteria.view, name='reporteria')
 ]
 
 if settings.DEBUG:

@@ -241,53 +241,6 @@
                 $("#" + id + "_select2").html('<option>' + $(this).attr("descripcion") + '</option>').trigger('change');
             })
         });
-        $(document).ready(function () {
-            $('.validarclave').keyup(function () {
-                var pswd = $(this).val();
-                var habilitar = true;
-                if (pswd.length < 8) {
-                    $('#length').removeClass('valid').addClass('invalid');
-                    habilitar = false;
-                } else {
-                    $('#length').removeClass('invalid').addClass('valid');
-                }
-                if (pswd.match(/[A-z]/)) {
-                    $('#letter').removeClass('invalid').addClass('valid');
-                } else {
-                    habilitar = false;
-                    $('#letter').removeClass('valid').addClass('invalid');
-                }
-                if (pswd.match(/[A-Z]/) && pswd.match(/[a-z]/)) {
-                    $('#capital').removeClass('invalid').addClass('valid');
-                } else {
-                    habilitar = false;
-                    $('#capital').removeClass('valid').addClass('invalid');
-                }
-                if (pswd.match(/\d/)) {
-                    $('#number').removeClass('invalid').addClass('valid');
-                } else {
-                    habilitar = false;
-                    $('#number').removeClass('valid').addClass('invalid');
-                }
-                if ($("#id_nueva").val().toLowerCase() != $("#id_anterior").val().toLowerCase()) {
-                    $('#igualdad').removeClass('invalid').addClass('valid');
-                } else {
-                    habilitar = false;
-                    $('#igualdad').removeClass('valid').addClass('invalid');
-                }
-                if ($("#id_nueva").val() == $("#id_repetir").val()) {
-                    $('#nuevarepetir').removeClass('invalid').addClass('valid');
-                } else {
-                    habilitar = false;
-                    $('#nuevarepetir').removeClass('valid').addClass('invalid');
-                }
-                if (habilitar) {
-                    $("#botonguardar").show();
-                } else {
-                    $("#botonguardar").hide();
-                }
-            });
-        });
     </script>
     {% block extrascabecera %}
     {% endblock %}
@@ -488,16 +441,6 @@
                                             {% endblock %}
                                         </div>
                                     </div>
-                                    {#                <div class="card-footer text-right">#}
-                                    {#                    <a href="javascript:;" class="btn btn-success btn-form" id="botonguardar">#}
-                                    {#                        <i class="fas fa-save"></i> {% block nombreboton %}Guardar{% endblock %}#}
-                                    {#                    </a>#}
-                                    {#                    {% block extrabuttons %}#}
-                                    {#                    {% endblock %}#}
-                                    {#                    <a href="{% block cancelar %}/{% endblock %}" class="btn btn-danger {% block clasextracancelar %}{% endblock %} ">#}
-                                    {#                        <i class="fas fa-times"></i> Cancelar#}
-                                    {#                    </a>#}
-                                    {#                </div>#}
                                 </form>
                             </div>
                         </div>

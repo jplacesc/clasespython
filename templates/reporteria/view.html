@@ -1,0 +1,52 @@
+{% extends "index.html" %}
+{% load extras %}
+{% block cabecera %}
+    <script type="text/javascript" src="/static/js/jquery.isloading.min.js"></script>
+    <link href="/static/css/table-responsive.css?1.0.0" type="text/css" rel="stylesheet"/>
+    <script type='text/javascript' src="/static/js/form.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            $(".btn-ejecutar").click(function () {
+                var url = "reporteria?action=ventas_excel";
+                window.open(url, '_blank');
+            });
+        });
+    </script>
+{% endblock %}
+{% block atras-titulo %}
+    <div class="section-header-back">
+        <div class="row">
+            <div class="col-1">
+                <a href="/" class="btn btn-light btn-icon-split">
+                        <span class="icon text-white-50">
+                            <i class="fas fa-arrow-left"></i>
+                        </span>
+                </a>
+            </div>
+            <div class="col-11">
+                <h6 class="m-0 font-weight-bold text-primary">{{ title }}</h6>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block cuerpo %}
+    <div class="card-header py-3">
+
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                <tr>
+                    <th style="text-align: center; vertical-align: middle; width: 10%" class="hidden-phone hidden-tablet">
+                    Facturas de venta diaria
+                    </th>
+                    <th style="text-align: center; vertical-align: middle; width: 20%">
+                        <a href="javascript:;" class="btn btn-success btn-ejecutar"> Reporte</a>
+                    </th>
+                </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+{% endblock %}

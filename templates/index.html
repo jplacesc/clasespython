@@ -69,8 +69,6 @@
         });
 
         $(function () {
-
-
             bloquearpantalla = function () {
                 if (!$(".blockUI").length) {
                     $.blockUI({
@@ -87,72 +85,6 @@
                         }
                     });
                 }
-            };
-            Confirm = {
-                question: function (question, fun_yes/*=null*/, fun_no/*=null*/) {
-                    var $popup = $('#modalConfirm');
-
-                    $popup.modal({backdrop: 'static', keyboard: false}).modal('show');
-
-                    $('.modal-body p', $popup).html(question);
-
-                    $('.action_yes', $popup).off('click').on('click', function () {
-                        if (typeof fun_yes != 'undefined') {
-                            fun_yes();
-                        }
-                        $popup.modal('hide');
-                    });
-
-                    $('.action_not', $popup).off('click').on('click', function () {
-                        if (typeof fun_no != 'undefined') {
-                            fun_no();
-                        }
-                        $popup.modal('hide');
-                    });
-                },
-                ajax: function (aData, fun_yes/*=null*/, fun_no/*=null*/) {
-                    var d = {"action": "deleteView"}
-                    $.each(aData, function (index, value) {
-                        d[index] = value
-                    });
-                    aData = d
-                    bloquearpantalla();
-                    var $popup = $('#modalConfirmAjax');
-                    $.ajax({
-                        type: "GET",
-                        url: "/data",
-                        data: aData,
-                        success: function (data) {
-                            if (data.result == 'ok') {
-                                $('.modal-body', $popup).html(data.html);
-                                var h = $(window).height() - 350;
-                                $popup.modal({backdrop: 'static', keyboard: false, width: "60%", height: h}).modal('show');
-                                $('.action_yes', $popup).off('click').on('click', function () {
-                                    if (typeof fun_yes != 'undefined') {
-                                        fun_yes();
-                                    }
-                                    $popup.modal('hide');
-                                });
-
-                                $('.action_not', $popup).off('click').on('click', function () {
-                                    if (typeof fun_no != 'undefined') {
-                                        fun_no();
-                                    }
-                                    $popup.modal('hide');
-                                });
-                            } else {
-                                alertaSuccess(data.mensaje);
-                            }
-                            $.unblockUI();
-                        },
-                        error: function () {
-                            $.unblockUI();
-                            alertaDanger("Error al enviar los datos.");
-                        },
-                        dataType: "json",
-                    });
-                },
-
             };
             tipo_formulario = function (elemento) {
                 if (elemento.attr('formtype') == 'form-vertical') {
