@@ -149,7 +149,7 @@ class FacturaVentaCabeceraForm(forms.Form):
     tipo = forms.ChoiceField(label=u'Tipo de emisión', choices=FacturaVenta.TipoFacturaVenta.choices,
                                       initial=FacturaVenta.TipoFacturaVenta.NOTAVENTA,
                                       widget=forms.Select(attrs={'class': 'form-select', 'col': '4'}),
-                                      error_messages={'required': 'Seleccione el tipo de facilitador (requerido)'})
+                                      error_messages={'required': 'Seleccione el tipo de emisión'})
     fechafactura = forms.DateField(label=u"Fecha documento", initial=datetime.now().date(),
                                    required=False, input_formats=['%d-%m-%Y'],
                                    widget=DateTimeInput(format='%d-%m-%Y',
