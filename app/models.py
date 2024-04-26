@@ -71,7 +71,7 @@ class Provincia(ModeloBase):
         unique_together = ('nombre', 'pais')
 
     def en_uso(self):
-        return self.canton_set.values('id').all().exists()
+        return self.ciudad_set.values('id').all().exists()
 
     def save(self, *args, **kwargs):
         self.nombre = self.nombre.upper()
@@ -1055,3 +1055,24 @@ class FacturaVentaDetalle(ModeloBase):
 
     def save(self, *args, **kwargs):
         super(FacturaVentaDetalle, self).save(*args, **kwargs)
+
+
+class ModeloEjemplo(ModeloBase):
+    class Estado(models.IntegerChoices):
+        NINGUNO = 0, "Ninguno"
+        APROBADO = 1, "APROBADO"
+        RECHAZADO = 2, "RECHAZADO"
+        PENDIENTE = 3, "PENDIENTE"
+
+    estado = models.IntegerField(choices=Estado.choices, default=Estado.NINGUNO, blank=True, null=True, verbose_name=u"Estado")
+    valor = models.DecimalField(default=0, max_digits=10,decimal_places=2, verbose_name=u"valor nota")
+    cantidad= models.IntegerField(default=0, verbose_name=u"catidad")
+    codigo = models.CharField(max_length=10, blank=True, null=True, verbose_name=u"codigo")
+    descripcion = models.TextField(blank=True, null=True, verbose_name=u"descripción")
+    pais= models.ForeignKey(Pais,blank=True, null=True, verbose_name=u"Pais", on_delete=models.SET_NULL)
+    opcion = models.ManyToManyField(OpcionModulo, verbose_name=u'Opcion de modulo')
+    fechaInicio = models.DateField(verbose_name=u"Fecha de inicio",default=datetime.now().date(), null=True, blank=True)
+    fechaFin = models.DateTimeField(verbose_name=u'Fecha de fin',auto_now=True, null=True, blank=True)
+    archivo = models.FileField(upload_to='archivoEjemplo/%Y/%m/%d/', blank=True, null=True, verbose_name=u'Archivo')
+
+
