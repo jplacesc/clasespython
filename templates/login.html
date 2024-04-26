@@ -293,7 +293,7 @@
                     type: "POST",
                     url: "/login",
                     dataType: "json",
-                    data: {"action": "login", "usuario": usuario, "clave": clave, "mobile": mobile},
+                    data: {"action": "login", "usuario": usuario, "clave": clave, "mobile": mobile,csrfmiddlewaretoken: '{{ csrf_token }}',},
                     success: function (data) {
                         if (data.result == 'ok') {
                             location.href = "/login";
