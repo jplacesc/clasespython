@@ -71,13 +71,15 @@
     <div class="card-header py-3">
         <div class="row">
             <div class="col-2">
-                <a href="javascript:void(0)"
-                   onclick="formModal('','Agregar grupo','agregarGrupo')" class="btn btn-success btn-icon-split">
-                    <span class="icon text-white-50">
-                                            <i class="fas fa-plus-circle"></i>
-                                        </span>
-                    <span class="text">Agregar</span>
-                </a>
+                {% if perms.app.puede_agregar_grupo %}
+                    <a href="javascript:void(0)"
+                       onclick="formModal('','Agregar grupo','agregarGrupo')" class="btn btn-success btn-icon-split">
+                        <span class="icon text-white-50">
+                                                <i class="fas fa-plus-circle"></i>
+                                            </span>
+                        <span class="text">Agregar</span>
+                    </a>
+                {% endif %}
                 <a href="/grupos?action=addgrupo" class='btn btn-icon icon-left btn-success note-btn'>
                                 <span class="fa fa-plus "></span> Adicionar
                             </a>

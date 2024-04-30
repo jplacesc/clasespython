@@ -5,6 +5,16 @@ from django.contrib.sessions.models import Session
 from django.db import models
 from datetime import datetime, timedelta
 from django.db.models import Sum
+
+class Perms(models.Model):
+    class Meta:
+        permissions = (
+            ("puede_agregar_grupo", "Puede agregar un grupo en el sistema"),
+            ("puede_editar_grupo", "Puede editar grupo en el sistema"),
+            ("puede_eliminar_grupo", "Puede eliminar grupo en el sistema"),
+            ("puede_visualizar_unidad_medida", "Puede visualizar unidad de  medida"),
+        )
+
 class Sexo(ModeloBase):
     nombre = models.CharField(default='', max_length=100, verbose_name=u'Nombre')
 
