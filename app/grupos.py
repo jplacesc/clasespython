@@ -12,7 +12,6 @@ from django.db.models import Q
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.utils.encoding import force_str
-
 from app.formularios import *
 from django.db import connection, transaction
 from django.template import Context
@@ -34,6 +33,8 @@ def view(request):
                 with transaction.atomic():
                     form = GrupoForm(request.POST)
                     if form.is_valid():
+                        if not request.user.has_perm('app.puede_agregar_grupo'):
+                            raise NameError(u'Lo sentimos, Ud no puede agregar grupos.')
                         if not Group.objects.values('id').filter(name=form.cleaned_data['name']).exists():
                             instance = Group(name=form.cleaned_data['name'])
                             instance.save(request)
@@ -130,6 +131,7 @@ def view(request):
                     data['id'] = request.GET['id']
                     data['action'] = 'editarGrupo'
                     data['filtro'] = grupo = Group.objects.get(pk=request.GET['id'])
+
                     form = GrupoForm(initial={'name': grupo.name})
                     data['form'] = form
                     template = get_template("grupos/form.html")
