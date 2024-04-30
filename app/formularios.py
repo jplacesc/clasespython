@@ -66,7 +66,7 @@ class VendedorForm(forms.Form):
     tipodocumento = forms.ChoiceField(label=u'Tipo identificación', choices=Vendedor.TipoDocumento.choices,
                              initial=Vendedor.TipoDocumento.NINGUNO,
                              widget=forms.Select(attrs={'class': 'form-select', 'col': '4'}),
-                             error_messages={'required': 'Seleccione el tipo de facilitador (requerido)'})
+                             error_messages={'required': 'Seleccione el tipo de codumento (requerido)'})
     identificacion = forms.CharField(max_length=200, label=u'Identificación', required=False,
                                      widget=forms.TextInput(attrs={'class': 'form-control', 'col': '4'}))
     nacimiento = forms.DateField(label=u"Fecha nacimiento", initial=datetime.now().date(),
