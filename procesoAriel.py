@@ -208,8 +208,6 @@ def importar_data_excel():
 
 #importar_data_excel()
 
-#Consultas
-
 unidadMedida=UnidadMedida.objects.get(id=11)
 unidadesMedida=UnidadMedida.objects.filter(id=11)
 unidadesMedidas=UnidadMedida.objects.filter(status=True).order_by('unidad')
@@ -220,5 +218,9 @@ primerV1=Item.objects.filter(status=True).first()
 primerV2=Item.objects.filter(status=True).last()
 primerV3=Item.objects.filter(status=True)[0]
 primerV4=Item.objects.filter(status=True).order_by('-id')[0]
+
+total_devices=ItemUnidadMedidaStock.objects.filter(itemunidadmedida__item__marca_id=9, status=True).aggregate(total=Avg('stock'))['total']
+
+
 
 
