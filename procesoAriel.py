@@ -220,3 +220,4 @@ primerV3=Item.objects.filter(status=True)[0]
 primerV4=Item.objects.filter(status=True).order_by('-id')[0]
 
 total_devices=ItemUnidadMedidaStock.objects.filter(itemunidadmedida__item__marca_id=9, status=True).aggregate(total=Avg('stock'))['total']
+
