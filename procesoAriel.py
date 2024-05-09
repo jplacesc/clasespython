@@ -221,3 +221,4 @@ primerV2=Item.objects.filter(status=True).last()
 primerV3=Item.objects.filter(status=True)[0]
 primerV4=Item.objects.filter(status=True).order_by('-id')[0]
 
+
