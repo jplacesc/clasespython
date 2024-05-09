@@ -210,19 +210,3 @@ def importar_data_excel():
 
 # importar_data_excel()
 
-# CONSULTAS
-
-# Selecciona un objeto de la clase UnidadMedida cuyo ID sea 11. Esta consulta espera exactamente un resultado y arrojará un error si no encuentra ningún objeto o si encuentra más de uno.
-unidadMedida=UnidadMedida.objects.get(id=11)
-# Selecciona todos los objetos de la clase UnidadMedida cuyo ID sea 11. Esta consulta devuelve un conjunto de objetos, que puede estar vacío si no se encuentra ningún objeto con el ID especificado.
-unidadesMedida=UnidadMedida.objects.filter(id=11)
-# Selecciona todos los objetos de la clase UnidadMedida que tengan el atributo status igual a True, y los ordena por el atributo unidad.
-unidadesMedidas=UnidadMedida.objects.filter(status=True).order_by('unidad')
-# Selecciona todos los objetos de la clase UnidadMedida y los ordena por el atributo unidad. Esta consulta devuelve todos los objetos de esa clase.
-unidadesMedidas_1=UnidadMedida.objects.all().order_by('unidad')
-# Selecciona solo el atributo id de todos los objetos de la clase Item cuyo status sea True.
-soloid=Item.objects.only("id").filter(status=True)
-# Verifica si hay al menos un objeto de la clase Item con el atributo status igual a True.
-existe1=Item.objects.only("id").filter(id=10000).exists()
-# Selecciona el primer objeto de la clase Item que tenga el atributo status igual a True.
-primerV1=Item.objects.filter(status=True).first()

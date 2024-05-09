@@ -64,9 +64,6 @@
                 {#$("#subtotal_factura").text(subtotal_factura.toFixed(4));#}
                 $("#impuesto_factura").text(impuesto_factura.toFixed(4));
                 $("#total_factura").text(total_factura.toFixed(2));
-                if ($("#id_notacredito").val() == 0) {
-                    $("#id_valor").val(total_factura.toFixed(2));
-                }
                 if (lista_items1.length == 0) {
                     $('.cambio_factura').text("000");
                     $('#valor_efectivo').val(0);
@@ -175,12 +172,10 @@
                 lista_forma_pago = [];
                 $(".eliminar-forma-pago").each(function () {
                     var idformapago = $(this).data("idformapago");
-                    var notacredito = $(this).data("notacredito");
                     var valor = parseFloat($(this).data("valor"));
                     var observacion = $(this).data("observacion");
                     var listaAux = {
                         idformapago: idformapago,
-                        notacredito: notacredito,
                         valor: valor,
                         observacion: observacion
                     };
@@ -249,43 +244,6 @@
             });
 
 
-            $('#id_cliente_select2').change(function () {
-                $('#id_ordenpedido').empty().append('<option value="">---------</option>').val(0).trigger("change");
-                var control = $(this);
-                var id = parseInt(control.val());
-                if (id > 0) {
-                    bloquearpantalla();
-                    $.ajax({
-                        type: "POST",
-                        url: "/facturacion",
-                        data: {'action': 'consulta_orden', 'id': id},
-                        success: function (data) {
-                            if (data.result == 'ok') {
-                                $.unblockUI();
-                                for (elemento in data.lista) {
-                                    $('#id_ordenpedido').append('<option value="' + data.lista[elemento][0] + '">' + data.lista[elemento][1] + '</option>');
-                                }
-                                for (elemento1 in data.listanota) {
-                                    $('#id_notacredito').append('<option value="' + data.listanota[elemento1][0] + '">' + data.listanota[elemento1][1] + '</option>');
-                                }
-                                lista_forma_pago = [];
-                                lista_items_medida = [];
-                                lista_items1 = [];
-                            } else {
-                                $.unblockUI();
-                                control.val(0).trigger("change");
-                                Swal.fire({text: data.mensaje});
-                            }
-                        }, error: function () {
-                            $.unblockUI();
-                            control.val(0).trigger("change");
-                            Swal.fire({text: "Error de conexion."});
-                        }, dataType: "json"
-                    });
-                    $('#id_item').select2('open');
-                }
-            });
-
             {#PROCESOS PARA FORMA DE PAGO#}
             $(".eliminar-forma-pago").click(function () {
                 eliminar_forma_pago();
@@ -294,22 +252,14 @@
             $("#agregar-forma-pago").click(function () {
                 var idformapago = $("#id_formapago").val();
                 var nombre_formapago = $("#id_formapago option:selected").text();
-                var idnotacredito = $("#id_notacredito").val();
-                var nombre_nota_creedito = $("#id_notacredito option:selected").text();
                 var nombre = "";
-                if (idnotacredito > 0) {
-                    $('#id_valor').prop('disabled', false);
-                    $('#id_formapago').prop('disabled', false);
-                    nombre = nombre_nota_creedito;
-                } else {
-                    nombre = nombre_formapago;
-                }
+                nombre = nombre_formapago;
                 var valor = parseFloat($("#id_valor").val());
                 var observacion = $("#id_observacion").val();
                 var totapagar = parseFloat($("#total_factura").text());
                 var totalformapago = parseFloat($("#totalformapago1").text());
                 var totalporpagar = (totapagar - (totalformapago + valor)).toFixed(2);
-                if ((idformapago <= 0 && idnotacredito <= 0) || valor <= 0) {
+                if ((idformapago <= 0 ) || valor <= 0) {
                     Swal.fire({text: "Debe ingresar una forma de pago y un valor"});
                     return false;
                 }
@@ -329,28 +279,15 @@
                         valida = true;
                         return false;
                     }
-                    if (idnotacredito != 0 && $(this).data('notacredito') == idnotacredito) {
-                        Swal.fire({text: "Ya ha ingresado esa NC como forma de pago."});
-                        $("#id_notacredito").val(0).trigger("change");
-                        valida = true;
-                        return false;
-                    }
                 });
 
-                if (valor > 0 && (idformapago > 0 || idnotacredito > 0) && !valida) {
+                if (valor > 0 && (idformapago > 0) && !valida) {
                     if ($('.eliminar-forma-pago').length == 0) {
                         $("#detalle-forma-pago").empty();
                     }
 
                     if (idformapago == 2 && parseFloat(valor) == parseFloat(total_factura)) {
                         $('#valor_efectivo').val(parseFloat(valor));
-                    }
-
-                    if (idformapago > 0) {
-                        idnotacredito = 0
-                    }
-                    if (idnotacredito > 0) {
-                        idformapago = 0
                     }
 
                     var row = "<tr id='formapago_" + idformapago + "' >" +
@@ -369,10 +306,8 @@
                     {#$("#container-pago").getNiceScroll().resize();#}
                     {#$("#container-pago").niceScroll().updateScrollBar();#}
                     actualizar_lista_forma_pago();
-                    $("#id_notacredito").val(0).trigger("change");
                 }
                 $("#id_formapago").prop('disabled', false);
-                $("#id_notacredito").prop('disabled', false);
             });
 
             function generaValorEfectivo(valor) {
@@ -394,7 +329,7 @@
                         "<td>EFECTIVO</td>" +
                         "<td style='text-align: right;'>" + parseFloat(valorFinalEfectivo).toFixed(2) + "</td>" +
                         "<td></td>" +
-                        "<td class='text-center'><a href='javascript:;' class='btn btn-sm btn-outline-danger eliminar-forma-pago' title='Eliminar' data-idformapago='2' data-notacredito='0' data-valor='" + valorFinalEfectivo + "'  data-observacion='' ><i class='far fa-trash-alt'></i></a></td>" +
+                        "<td class='text-center'><a href='javascript:;' class='btn btn-sm btn-outline-danger eliminar-forma-pago' title='Eliminar' data-idformapago='2' data-valor='" + valorFinalEfectivo + "'  data-observacion='' ><i class='far fa-trash-alt'></i></a></td>" +
                         "</tr>";
                     $("#detalle-forma-pago").append(row);
                     $(".eliminar-forma-pago").unbind("click.eliminar-forma-pago");
@@ -421,7 +356,6 @@
             $('#id_formapago').change(function () {
                 $("#id_valor").val((parseFloat($("#total_factura").text()) - parseFloat($("#totalformapago1").text())).toFixed(2));
                 if ($(this).val() > 0) {
-                    $("#id_notacredito").val(0).trigger("change");
                     $('#id_valor').prop('disabled', false);
                 }
             });
@@ -681,15 +615,6 @@
                     Swal.fire("El total no debe ser menor o igual a cero");
                     document.getElementById("agregar-item").style.display = "block";
                     return false;
-                }
-
-                var tipoemision = $("#id_tipo").val();
-                if (tipoemision == 2) {
-                    if (lista_items1.length >= (parseInt({{ limiteitems }}))) {
-                        Swal.fire({text: "No puede ingresar más de ({{ limiteitems }}) productos."});
-                        document.getElementById("agregar-item").style.display = "block";
-                        return false;
-                    }
                 }
 
                 ///// AGREGA CANTIDAD EQUIVALENTE EN LISTA DE UNIDAD DE MEDIDAS PARA UN ITEM  /////

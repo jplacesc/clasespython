@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import io
@@ -29,8 +30,6 @@ from datetime import datetime, time
 from django.core.exceptions import ObjectDoesNotExist
 import hashlib
 from app.funciones import convertir_fecha,convertir_fecha_invertida
-from django.db.models import Func, Q, Avg, F,Count, Max, Sum, Exists, OuterRef,Min
-from django.db.models import FloatField
 def importar_data_csv():
     import os
     archivo = os.path.join(os.path.join(BASE_DIR,  'files', 'facturas Venta.csv'))
@@ -208,21 +207,18 @@ def importar_data_excel():
     miarchivo.save("facturasVenta.xlsx")
     print("FIN: ", miarchivo)
 
-# importar_data_excel()
+#importar_data_excel()
 
-# CONSULTAS
-
-# Selecciona un objeto de la clase UnidadMedida cuyo ID sea 11. Esta consulta espera exactamente un resultado y arrojará un error si no encuentra ningún objeto o si encuentra más de uno.
-unidadMedida=UnidadMedida.objects.get(id=11)
-# Selecciona todos los objetos de la clase UnidadMedida cuyo ID sea 11. Esta consulta devuelve un conjunto de objetos, que puede estar vacío si no se encuentra ningún objeto con el ID especificado.
-unidadesMedida=UnidadMedida.objects.filter(id=11)
-# Selecciona todos los objetos de la clase UnidadMedida que tengan el atributo status igual a True, y los ordena por el atributo unidad.
-unidadesMedidas=UnidadMedida.objects.filter(status=True).order_by('unidad')
-# Selecciona todos los objetos de la clase UnidadMedida y los ordena por el atributo unidad. Esta consulta devuelve todos los objetos de esa clase.
-unidadesMedidas_1=UnidadMedida.objects.all().order_by('unidad')
-# Selecciona solo el atributo id de todos los objetos de la clase Item cuyo status sea True.
-soloid=Item.objects.only("id").filter(status=True)
-# Verifica si hay al menos un objeto de la clase Item con el atributo status igual a True.
-existe1=Item.objects.only("id").filter(id=10000).exists()
-# Selecciona el primer objeto de la clase Item que tenga el atributo status igual a True.
-primerV1=Item.objects.filter(status=True).first()
+unidadMedida = UnidadMedida.objects.get(id=11)
+unidadesMediad = UnidadMedida.objects.filter(id=11)
+unidadMedida = UnidadMedida.objects.filter(status=True).order_by('unidad')
+unidadMedida_1 = UnidadMedida.objects.all().order_by('unidad')
+item = Item.objects.only("id").filter(status=True)
+item = Item.objects.filter(status=True).exists()
+item = Item.objects.filter(status=True).first()
+item = Item.objects.filter(status=True).last()
+primerv2 = Item.objects.filter(status=True)[0]
+primerv3 = Item.objects.filter(id=1000)[0]
+primerv4 = Item.objects.filter(status=True).order_by('-id')[0]
+total_devies = ItemUnidadMedidaStock.objects.filter(itemunidadmedida__item__marca_id=9,status=True).aggregate(total=Avg('stock'))['total']
+facturasxfecha=FacturaVenta.objects.filter(status=True,fechafactura__gte='2023-05-01',fechafactura__lte='2023-05-10')

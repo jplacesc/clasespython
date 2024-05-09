@@ -367,7 +367,6 @@ def view(request):
                     form2 = FacturaVentaFormaPagoForm()
                     form2.adicionar()
                     data['formformapago'] = form2
-                    data['limiteitems']= 13
                     return render(request, "facturacion/addfactura.html", data)
                 except Exception as ex:
                     pass
