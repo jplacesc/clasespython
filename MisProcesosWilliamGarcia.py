@@ -29,6 +29,8 @@ from datetime import datetime, time
 from django.core.exceptions import ObjectDoesNotExist
 import hashlib
 from app.funciones import convertir_fecha,convertir_fecha_invertida
+from django.db.models import Func, Q, Avg, F,Count, Max, Sum, Exists, OuterRef,Min
+from django.db.models import FloatField
 def importar_data_csv():
     import os
     archivo = os.path.join(os.path.join(BASE_DIR,  'files', 'facturas Venta.csv'))
@@ -230,9 +232,31 @@ primerV3= Item.objects.filter(status=True)[0]
 
 primerV4= Item.objects.filter(status=True).order_by('-id')[0]
 
-#total_devies=ItemUnidadMedidaStock.objects.filter(itemunidadmedida__item__marca_id=9, status=True).aggregate(total=Avg('stock'))['total']
+total_devies=ItemUnidadMedidaStock.objects.filter(itemunidadmedida__item__marca_id=9, status=True).aggregate(total=Avg('stock'))['total']
 
-#total_devies=ItemUnidadMedidaStock.objects.filter(itemunidadmedida__item__marca_id=9, status=True).aggregate(total=Avg('stock'))['total']
+facturaxfecha_promedio=FacturaVenta.objects.filter(status=True, fechafactura__gte='2023-05-01', fechafactura__lte='2025-05-10').aggregate(venta=(Avg(F('total'), output_field=FloatField()))).get('venta')
+
+facturaxfecha_suma=FacturaVenta.objects.filter(status=True, fechafactura__gte='2023-05-01', fechafactura__lte='2025-05-10').aggregate(venta=(Sum(F('total'), output_field=FloatField()))).get('venta')
+
+facturaxfecha=FacturaVenta.objects.filter(status=True, fechafactura__gte='2023-05-01', fechafactura__lte='2025-05-10')
+
+facturaxcoincidencia=FacturaVenta.objects.filter(Q(numero__icontains='001') | Q(codigo__icontains='001'),status=True)
+
+cantxcoincidencia=FacturaVenta.objects.filter(Q(numero__icontains='001') | Q(codigo__icontains='001'),status=True).count()
+
+cantxcoincidenciaV1= len(FacturaVenta.objects.filter(Q(numero__icontains='001') | Q(codigo__icontains='001'),status=True))
+
+facturasv2 = FacturaVenta.objects.select_related().filter(status=True)
+
+listafacturas_listas= FacturaVenta.objects.values_list('id', flat=True).filter(status=True)
+
+listafacturas_lisv2= FacturaVenta.objects.values('id').filter(status=True)
+
+facturasdeventa = FacturaVenta.objects.filter(status=True).annotate(es_efectivo=Exists(FacturaVentaFormaPago.objects.filter(status=True, formapago__id=2, facturaventa__id=OuterRef('id'))))
+
+maximo = FacturaVenta.objects.filter(status=True).aggregate(mayor=Max('fechafactura'))['mayor']
+
+minimo = FacturaVenta.objects.filter(status=True).aggregate(minimo=Min('fechafactura'))['minimo']
 
 
 
