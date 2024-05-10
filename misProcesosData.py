@@ -37,7 +37,7 @@ def importar_data_csv():
     with open(archivo, newline='', encoding="utf8") as File:
         reader = csv.reader(File, delimiter='|', quoting=csv.QUOTE_MINIMAL)
         contador = 0
-        totalfilas = 14000
+        totalfilas = 298
         for row in reader:
             print(row)
             if contador > 0:
@@ -127,13 +127,14 @@ def importar_data_csv():
             contador += 1
 
 
-# importar_data_csv()
+importar_data_csv()
 
 def importar_data_excel():
     contador = 0
     miarchivo = openpyxl.load_workbook("files/facturasVenta.xlsx")
     lista = miarchivo.get_sheet_by_name('Hoja1')
     totallista = lista.rows
+    totalfilas = 731
     for fila in totallista:
         contador += 1
         if contador>2:
@@ -195,7 +196,7 @@ def importar_data_excel():
                         )
                         eFacturaVentaFormaPago.save()
                     else:
-                        eFacturaVentaFormaPago=FacturaVentaFormaPago.objects.values('id').get(facturaventa=eFacturaVenta, formapago=eFormaPago)
+                        eFacturaVentaFormaPago=FacturaVentaFormaPago.objects.filter(facturaventa=eFacturaVenta, formapago=eFormaPago).first()
                         eFacturaVentaFormaPago.valor=float(valorForma.replace(',', '.'))
                         eFacturaVentaFormaPago.save()
 
@@ -214,7 +215,7 @@ def importar_data_excel():
                             costo=float(costo.replace(',', '.')))
                         eFacturaVentaDetalle.save()
                     fila[26].value = "REGISTRO ACTUALIZADO"
-                    print(f"({total}/{contador}) Se guardo/actualizo: {eFacturaVenta.__str__()}")
+                    print(f"({contador}/{totalfilas}) Se guardo/actualizo: {eFacturaVenta.__str__()}")
                 except Exception as ex:
                     transaction.set_rollback(True)
                     print(f"Ocurrio un error {ex.__str__()}")
@@ -223,4 +224,4 @@ def importar_data_excel():
     miarchivo.save("facturasVenta.xlsx")
     print("FIN: ", miarchivo)
 
-importar_data_excel()
+#importar_data_excel()
