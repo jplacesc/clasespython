@@ -37,7 +37,7 @@ def importar_data_csv():
     with open(archivo, newline='', encoding="utf8") as File:
         reader = csv.reader(File, delimiter='|', quoting=csv.QUOTE_MINIMAL)
         contador = 0
-        total = 14000
+        totalfilas = 14000
         for row in reader:
             print(row)
             if contador > 0:
@@ -91,32 +91,41 @@ def importar_data_csv():
                         descripcionForma=formasPago[0]
                         valorForma=formasPago[1]
                         eFormaPago=FormaPago.objects.get(descripcion=descripcionForma)
-                        eFacturaVentaFormaPago = FacturaVentaFormaPago(
-                            facturaventa=eFacturaVenta,
-                            formapago=eFormaPago,
-                            observacion='migración',
-                            valor=valorForma,
-                        )
-                        eFacturaVentaFormaPago.save()
-
-                        eFacturaVentaDetalle = FacturaVentaDetalle(
-                            facturaventa=eFacturaVenta,
-                            itemunidadmedidastock_id=int(itemunidadmedidastock_id),
-                            cantidad=cantidad,
-                            precio=precio,
-                            subtotal=subtotal,
-                            impuesto_id=int(impuesto_id),
-                            valorimpuesto=valorimpuesto,
-                            total=totaldetalle,
-                            porcentaje_ganancia=porcentaje_ganancia,
-                            ganancia=ganancia,
-                            costo=costo)
-                        eFacturaVentaDetalle.save()
-                        print(f"({total}/{contador}) Se guardo/actualizo: {eFacturaVenta.__str__()}")
+                        if not FacturaVentaFormaPago.objects.filter(facturaventa=eFacturaVenta,
+                                                                    formapago=eFormaPago).exists():
+                            eFacturaVentaFormaPago = FacturaVentaFormaPago(
+                                facturaventa=eFacturaVenta,
+                                formapago=eFormaPago,
+                                observacion='migración',
+                                valor=valorForma,
+                            )
+                            eFacturaVentaFormaPago.save()
+                        else:
+                            eFacturaVentaFormaPago = FacturaVentaFormaPago.objects.filter(facturaventa=eFacturaVenta, formapago=eFormaPago).first()
+                            eFacturaVentaFormaPago.valor = float(valorForma.replace(',', '.'))
+                            eFacturaVentaFormaPago.save()
+                        if not FacturaVentaDetalle.objects.values('id').filter(facturaventa=eFacturaVenta,
+                                                                               itemunidadmedidastock_id=int(
+                                                                                       itemunidadmedidastock_id)).exists():
+                            eFacturaVentaDetalle = FacturaVentaDetalle(
+                                facturaventa=eFacturaVenta,
+                                itemunidadmedidastock_id=int(itemunidadmedidastock_id),
+                                cantidad=cantidad,
+                                precio=precio,
+                                subtotal=subtotal,
+                                impuesto_id=int(impuesto_id),
+                                valorimpuesto=valorimpuesto,
+                                total=totaldetalle,
+                                porcentaje_ganancia=porcentaje_ganancia,
+                                ganancia=ganancia,
+                                costo=costo)
+                            eFacturaVentaDetalle.save()
+                        print(f"({contador}/{totalfilas}) Se guardo/actualizo: {eFacturaVenta.__str__()}")
                     except Exception as ex:
                         transaction.set_rollback(True)
                         print(f"Ocurrio un error {ex.__str__()}")
             contador += 1
+
 
 # importar_data_csv()
 
