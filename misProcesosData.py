@@ -177,27 +177,33 @@ def importar_data_excel():
                     descripcionForma = formasPago[0]
                     valorForma = formasPago[1]
                     eFormaPago = FormaPago.objects.get(descripcion=descripcionForma)
-                    eFacturaVentaFormaPago = FacturaVentaFormaPago(
-                        facturaventa=eFacturaVenta,
-                        formapago=eFormaPago,
-                        observacion='migración',
-                        valor=float(valorForma.replace(',', '.')),
-                    )
-                    eFacturaVentaFormaPago.save()
+                    if not FacturaVentaFormaPago.objects.filter(facturaventa=eFacturaVenta, formapago=eFormaPago).exists():
+                        eFacturaVentaFormaPago = FacturaVentaFormaPago(
+                            facturaventa=eFacturaVenta,
+                            formapago=eFormaPago,
+                            observacion='migración',
+                            valor=float(valorForma.replace(',', '.')),
+                        )
+                        eFacturaVentaFormaPago.save()
+                    else:
+                        eFacturaVentaFormaPago=FacturaVentaFormaPago.objects.values('id').get(facturaventa=eFacturaVenta, formapago=eFormaPago)
+                        eFacturaVentaFormaPago.valor=float(valorForma.replace(',', '.'))
+                        eFacturaVentaFormaPago.save()
 
-                    eFacturaVentaDetalle = FacturaVentaDetalle(
-                        facturaventa=eFacturaVenta,
-                        itemunidadmedidastock_id=int(itemunidadmedidastock_id),
-                        cantidad=cantidad,
-                        precio=float(precio.replace(',', '.')),
-                        subtotal=float(subtotal.replace(',', '.')),
-                        impuesto_id=int(impuesto_id),
-                        valorimpuesto=float(valorimpuesto.replace(',', '.')),
-                        total=float(totaldetalle.replace(',', '.')),
-                        porcentaje_ganancia=float(porcentaje_ganancia.replace(',', '.')),
-                        ganancia=float(ganancia.replace(',', '.')),
-                        costo=float(costo.replace(',', '.')))
-                    eFacturaVentaDetalle.save()
+                    if not FacturaVentaDetalle.objects.values('id').filter(facturaventa=eFacturaVenta, itemunidadmedidastock_id=int(itemunidadmedidastock_id)).exists():
+                        eFacturaVentaDetalle = FacturaVentaDetalle(
+                            facturaventa=eFacturaVenta,
+                            itemunidadmedidastock_id=int(itemunidadmedidastock_id),
+                            cantidad=cantidad,
+                            precio=float(precio.replace(',', '.')),
+                            subtotal=float(subtotal.replace(',', '.')),
+                            impuesto_id=int(impuesto_id),
+                            valorimpuesto=float(valorimpuesto.replace(',', '.')),
+                            total=float(totaldetalle.replace(',', '.')),
+                            porcentaje_ganancia=float(porcentaje_ganancia.replace(',', '.')),
+                            ganancia=float(ganancia.replace(',', '.')),
+                            costo=float(costo.replace(',', '.')))
+                        eFacturaVentaDetalle.save()
                     fila[26].value = "REGISTRO ACTUALIZADO"
                     print(f"({total}/{contador}) Se guardo/actualizo: {eFacturaVenta.__str__()}")
                 except Exception as ex:
@@ -208,21 +214,4 @@ def importar_data_excel():
     miarchivo.save("facturasVenta.xlsx")
     print("FIN: ", miarchivo)
 
-# importar_data_excel()
-
-# CONSULTAS
-
-# Selecciona un objeto de la clase UnidadMedida cuyo ID sea 11. Esta consulta espera exactamente un resultado y arrojará un error si no encuentra ningún objeto o si encuentra más de uno.
-unidadMedida=UnidadMedida.objects.get(id=11)
-# Selecciona todos los objetos de la clase UnidadMedida cuyo ID sea 11. Esta consulta devuelve un conjunto de objetos, que puede estar vacío si no se encuentra ningún objeto con el ID especificado.
-unidadesMedida=UnidadMedida.objects.filter(id=11)
-# Selecciona todos los objetos de la clase UnidadMedida que tengan el atributo status igual a True, y los ordena por el atributo unidad.
-unidadesMedidas=UnidadMedida.objects.filter(status=True).order_by('unidad')
-# Selecciona todos los objetos de la clase UnidadMedida y los ordena por el atributo unidad. Esta consulta devuelve todos los objetos de esa clase.
-unidadesMedidas_1=UnidadMedida.objects.all().order_by('unidad')
-# Selecciona solo el atributo id de todos los objetos de la clase Item cuyo status sea True.
-soloid=Item.objects.only("id").filter(status=True)
-# Verifica si hay al menos un objeto de la clase Item con el atributo status igual a True.
-existe1=Item.objects.only("id").filter(id=10000).exists()
-# Selecciona el primer objeto de la clase Item que tenga el atributo status igual a True.
-primerV1=Item.objects.filter(status=True).first()
+importar_data_excel()
