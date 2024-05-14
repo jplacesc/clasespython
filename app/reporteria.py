@@ -21,7 +21,7 @@ import sys
 from django.template.loader import get_template
 from app.funciones import log, cargar_plantilla_base_simple, MiPaginador, convertir_fecha, convertir_fecha_hora,convertir_fecha_hora_invertida
 from django.shortcuts import render, redirect
-
+from app.funciones import round_half_up
 @login_required(redirect_field_name='ret', login_url='/loginsga')
 @transaction.atomic()
 def view(request):
