@@ -29,7 +29,7 @@ from datetime import datetime, time
 from django.core.exceptions import ObjectDoesNotExist
 import hashlib
 from app.funciones import convertir_fecha,convertir_fecha_invertida
-from django.db.models import Func, Q, Avg, F,Count, Max, Sum, Exists, OuterRef,Min
+from django.db.models import Func, Q, Avg, F, Count, Max, Sum, Exists, OuterRef, Min
 from django.db.models import FloatField
 def importar_data_csv():
     import os
@@ -208,21 +208,52 @@ def importar_data_excel():
     miarchivo.save("facturasVenta.xlsx")
     print("FIN: ", miarchivo)
 
-# importar_data_excel()
+#importar_data_excel()
 
-# CONSULTAS
-
-# Selecciona un objeto de la clase UnidadMedida cuyo ID sea 11. Esta consulta espera exactamente un resultado y arrojará un error si no encuentra ningún objeto o si encuentra más de uno.
-unidadMedida=UnidadMedida.objects.get(id=11)
-# Selecciona todos los objetos de la clase UnidadMedida cuyo ID sea 11. Esta consulta devuelve un conjunto de objetos, que puede estar vacío si no se encuentra ningún objeto con el ID especificado.
-unidadesMedida=UnidadMedida.objects.filter(id=11)
-# Selecciona todos los objetos de la clase UnidadMedida que tengan el atributo status igual a True, y los ordena por el atributo unidad.
-unidadesMedidas=UnidadMedida.objects.filter(status=True).order_by('unidad')
-# Selecciona todos los objetos de la clase UnidadMedida y los ordena por el atributo unidad. Esta consulta devuelve todos los objetos de esa clase.
-unidadesMedidas_1=UnidadMedida.objects.all().order_by('unidad')
-# Selecciona solo el atributo id de todos los objetos de la clase Item cuyo status sea True.
+#Consulta1: Selecciona un objeto de la clase UnidadMedida cuyo ID sea 11:
+unidadMedida= UnidadMedida.objects.get(id=11)
+#Consulta2: Selecciona un objeto de la clase UnidadMedida cuyo ID sea 11:
+unidadMedida = UnidadMedida.objects.filter(id=11)
+#Connsulta3: Selecciona todos los objetos de la clase UnidadMedida que tengan el atributo status igual a True, y los ordena por el atributo unidad:
+unidadesMedidas = UnidadMedida.objects.filter(status=True).order_by('unidad')
+#Consulta4: Seleciona todos los objetos de la clase undadMedida y los ordena por el atributo unidad
+unidadesMedidas1=UnidadMedida.objects.all().order_by('unidad')
+#Consulta5: Seleccionar solo el atributo 'id' de todos los objetos de la clase Item cuyo status sea True
 soloid=Item.objects.only("id").filter(status=True)
-# Verifica si hay al menos un objeto de la clase Item con el atributo status igual a True.
-existe1=Item.objects.only("id").filter(id=10000).exists()
-# Selecciona el primer objeto de la clase Item que tenga el atributo status igual a True.
-primerV1=Item.objects.filter(status=True).first()
+#Consulta6: Verificar si hay al menos un objeto de la clase Item con status igual a True
+existe1 = Item.objects.only("id").filter(status=True).exists()
+#Consulta7: Seleccionar el primer objeto de la clase Item cuyo status sea True:
+primerV1 = Item.objects.filter(status=True).first()
+primerV1 = Item.objects.filter(id=1000).first()
+#Consulta8: Seleccionar el último objeto de la clase Item cuyo status sea True:
+primerV2 = Item.objects.filter(status=True).last()
+#Consulta9:Seleccionar el objeto más reciente de la clase Item cuyo status sea True:
+primerV3 = Item.objects.filter(status=True)[0]
+#Consulta10: Seleccionar todos los objetos de la clase Item cuyo status sea True, ordenando por el atributo 'id' en orden descendente:
+primerV4 = Item.objects.filter(status=True).order_by('-id')
+#Consulta11: Calcular el promedio de la columna 'stock' de todos los objetos de la clase ItemUnidadMedidaStock que cumplan con las condiciones especificadas:
+total_devives = ItemUnidadMedidaStock.objects.filter(itemunidadmedida__item__marca_id=9, status=True).aggregate(total=Avg('stock'))['total']
+#Consulta12: Calcular el promedio de los valores de la columna 'total' de todas las facturas de venta que cumplan con las condiciones especificadas:
+facturaxfechas_promedio= FacturaVenta.objects.filter(status=True, fechafactura__gte='2023-05-01', fechafactura__lte='2025-05-10').aggregate(venta=(Avg(F('total'), output_field=FloatField()))).get('venta')
+#Consulta13: Calcular la suma de los valores de la columna 'total' de todas las facturas de venta que cumplan con las condiciones especificadas:
+facturaxfechas_suma= FacturaVenta.objects.filter(status=True, fechafactura__gte='2023-05-01', fechafactura__lte='2025-05-10').aggregate(venta=(Sum(F('total'), output_field=FloatField()))).get('venta')
+#Consulta14: Seleccionar todas las facturas de venta que cumplan con las condiciones especificadas: que el atributo status sea True y que la fecha de la factura esté entre dos fechas dadas:
+facturasxfecha = FacturaVenta.objects.filter(status=True, fechafactura__gte='2023-05-01', fechafactura__lte='2025-05-10')
+#Consulta15: Selecciona todas las facturas de venta que cumplen alguna de las siguientes condiciones: el campo número contiene '001' o el campo código contiene '001', y el status es True
+facturasxcoincidencia = FacturaVenta.objects.filter(Q(numero__icontains='001') | Q(codigo__icontains='001'), status=True)
+#Consulta16: Cuenta el número de facturas de venta que cumplen las condiciones que la consulta anterior
+cantxcoincidencia = FacturaVenta.objects.filter(Q(numero__icontains='001') | Q(codigo__icontains='001'), status=True).count()
+#Consulta17: Realiza la misma consulta que la línea anterior, pero utiliza len() para obtener la longitud de la lista de resultados en lugar de la función count()
+cantXcoincidenciaV1 = len(FacturaVenta.objects.filter(Q(numero__icontains='001') | Q(codigo__icontains='001'), status=True))
+#Consulta18: Selecciona todas las facturas de venta cuyo atributo status sea True, utilizando select_related() para realizar una consulta más eficiente que incluya
+facturasV2 = FacturaVenta.objects.select_related().filter(status=True)
+#Consulta19: Selecciona solo los valores de la columna id de todas las facturas de venta cuyo atributo status sea True, devolviendo una lista plana de valores
+listaFacturas_lista= FacturaVenta.objects.values_list('id', flat=True).filter(status=True)
+#Consulta20: Similar a la línea anterior, pero esta vez devuelve un conjunto de diccionarios, donde cada diccionario contiene un solo par clave-valor con el valor de 'id'.
+listaFacturas_lista2 = FacturaVenta.objects.values('id').filter(status=True)
+#Consulta21: Para cada factura de venta cuyo atributo status sea True, anota si tiene asociado un registro en la tabla FacturaVentaFormaPago que cumpla con ciertos criterios.
+facturasdevventas = FacturaVenta.objects.filter(status=True).annotate(es_efectivo=Exists(FacturaVentaFormaPago.objects.filter(status=True, formapago_id=2, facturaventa_id=OuterRef('id'))))
+#Consulta 22: Calcula la fecha máxima (max) de todas las facturas de venta cuyo atributo status sea True, en la columna fecha_factura.
+maximo = FacturaVenta.objects.filter(status=True).aggregate(max=Max('fechafactura'))['max']
+#Consulta 23:Calcula la fecha mínima (min) de todas las facturas de venta cuyo atributo status sea True, en la columna fecha_factura.
+minimo = FacturaVenta.objects.filter(status=True).aggregate(min=Min('fechafactura'))['min']

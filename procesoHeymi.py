@@ -226,3 +226,35 @@ soloid=Item.objects.only("id").filter(status=True)
 existe1=Item.objects.only("id").filter(id=10000).exists()
 # Selecciona el primer objeto de la clase Item que tenga el atributo status igual a True.
 primerV1=Item.objects.filter(status=True).first()
+# Selecciona el ultimo objeto de la clase Item que tenga el atributo status igual a True.
+primerV2=Item.objects.filter(status=True).last()
+# Selecciona el primer objeto de la clase Item que tenga el atributo status igual a True. Esta consulta es similar a primer
+primerv3=Item.objects.filter(status=True)[0]
+
+primerv4=Item.objects.filter(status=True).order_by('id')[0]
+
+total_devies = ItemUnidadMedidaStock.objects.filter(itemunidadmedida__item__marca_id=9, status=True).aggregate(total=Avg('stock'))['total']
+
+facturasxfecha_promedio = FacturaVenta.objects.filter(status=True, fechafactura__gte='2023-05-01', fechafactura__lte='2025-05-10').aggregate(venta=(Avg(F('total'))))
+
+facturaxfecha_suma=FacturaVenta.objects.filter(status=True, fechafactura__gte='2023-05-01', fechafactura__lte='2025-05-10').aggregate(venta=(Sum(F('total'), output_field=FloatField()))).get('venta')
+
+facturaxfecha=FacturaVenta.objects.filter(status=True, fechafactura__gte='2023-05-01', fechafactura__lte='2025-05-10')
+
+facturaxcoincidencia=FacturaVenta.objects.filter(Q(numero__icontains='001') | Q(codigo__icontains='001'),status=True)
+
+cantxcoincidencia=FacturaVenta.objects.filter(Q(numero__icontains='001') | Q(codigo__icontains='001'),status=True).count()
+
+cantxcoincidenciaV1= len(FacturaVenta.objects.filter(Q(numero__icontains='001') | Q(codigo__icontains='001'),status=True))
+
+facturasv2 = FacturaVenta.objects.select_related().filter(status=True)
+
+listafacturas_listas= FacturaVenta.objects.values_list('id', flat=True).filter(status=True)
+
+listafacturas_lisv2= FacturaVenta.objects.values('id').filter(status=True)
+
+facturasdeventa = FacturaVenta.objects.filter(status=True).annotate(es_efectivo=Exists(FacturaVentaFormaPago.objects.filter(status=True, formapago__id=2, facturaventa__id=OuterRef('id'))))
+
+maximo = FacturaVenta.objects.filter(status=True).aggregate(mayor=Max('fechafactura'))['mayor']
+
+minimo = FacturaVenta.objects.filter(status=True).aggregate(minimo=Min('fechafactura'))['minimo']
