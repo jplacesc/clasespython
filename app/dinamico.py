@@ -34,6 +34,7 @@ def view(request):
                     datadoc = {}
                     datadoc['Sucursal'] = sv.sucursal.nombre_completo()
                     datadoc['Vendedor'] = sv.vendedor.nombre_completo()
+                    datadoc['fecha'] = u"%s"%sv.fecha_creacion
                     lista.append(datadoc)
                 response = HttpResponse(json.dumps(lista), content_type="application/json")
                 return response
