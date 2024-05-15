@@ -20,24 +20,25 @@ from django.core.wsgi import get_wsgi_application
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "app.settings")
 application = get_wsgi_application()
 
+
+
 from app.settings import BASE_DIR
 from django.db import transaction, connections, connection
-from django.db.models import Q
+from django.db.models import Q, Func, Avg, F, Count, Sum, Exists, OuterRef, Min, Max
+from django.db.models.fields import FloatField
 from app.models import *
 from time import sleep
 from datetime import datetime, time
 from django.core.exceptions import ObjectDoesNotExist
 import hashlib
 from app.funciones import convertir_fecha,convertir_fecha_invertida
-from django.db.models import Func, Q, Avg, F,Count, Max, Sum, Exists, OuterRef,Min
-from django.db.models import FloatField
 def importar_data_csv():
     import os
     archivo = os.path.join(os.path.join(BASE_DIR,  'files', 'facturas Venta.csv'))
     with open(archivo, newline='', encoding="utf8") as File:
         reader = csv.reader(File, delimiter='|', quoting=csv.QUOTE_MINIMAL)
         contador = 0
-        total = 14000
+        total = 298
         for row in reader:
             print(row)
             if contador > 0:
@@ -91,27 +92,33 @@ def importar_data_csv():
                         descripcionForma=formasPago[0]
                         valorForma=formasPago[1]
                         eFormaPago=FormaPago.objects.get(descripcion=descripcionForma)
-                        eFacturaVentaFormaPago = FacturaVentaFormaPago(
-                            facturaventa=eFacturaVenta,
-                            formapago=eFormaPago,
-                            observacion='migración',
-                            valor=valorForma,
-                        )
-                        eFacturaVentaFormaPago.save()
+                        if not FacturaVentaFormaPago.objects.values('id').filter(facturaventa=eFacturaVenta, formapago=eFormaPago).exists():
+                            eFacturaVentaFormaPago = FacturaVentaFormaPago(
+                                facturaventa=eFacturaVenta,
+                                formapago=eFormaPago,
+                                observacion='migración',
+                                valor=valorForma,
+                            )
+                            eFacturaVentaFormaPago.save()
+                        else:
+                            eFacturaVentaFormaPago = FacturaVentaFormaPago.objects.filter(facturaventa=eFacturaVenta, formapago=eFormaPago).first()
+                            eFacturaVentaFormaPago.valor = float(valorForma.replace(',', '.'))
+                            eFacturaVentaFormaPago.save()
 
-                        eFacturaVentaDetalle = FacturaVentaDetalle(
-                            facturaventa=eFacturaVenta,
-                            itemunidadmedidastock_id=int(itemunidadmedidastock_id),
-                            cantidad=cantidad,
-                            precio=precio,
-                            subtotal=subtotal,
-                            impuesto_id=int(impuesto_id),
-                            valorimpuesto=valorimpuesto,
-                            total=totaldetalle,
-                            porcentaje_ganancia=porcentaje_ganancia,
-                            ganancia=ganancia,
-                            costo=costo)
-                        eFacturaVentaDetalle.save()
+                        if not FacturaVentaDetalle.objects.values('id').filter(facturaventa=eFacturaVenta, itemunidadmedidastock_id=int(itemunidadmedidastock_id)).exists():
+                            eFacturaVentaDetalle = FacturaVentaDetalle(
+                                facturaventa=eFacturaVenta,
+                                itemunidadmedidastock_id=int(itemunidadmedidastock_id),
+                                cantidad=cantidad,
+                                precio=precio,
+                                subtotal=subtotal,
+                                impuesto_id=int(impuesto_id),
+                                valorimpuesto=valorimpuesto,
+                                total=totaldetalle,
+                                porcentaje_ganancia=porcentaje_ganancia,
+                                ganancia=ganancia,
+                                costo=costo)
+                            eFacturaVentaDetalle.save()
                         print(f"({total}/{contador}) Se guardo/actualizo: {eFacturaVenta.__str__()}")
                     except Exception as ex:
                         transaction.set_rollback(True)
@@ -125,6 +132,7 @@ def importar_data_excel():
     miarchivo = openpyxl.load_workbook("files/facturasVenta.xlsx")
     lista = miarchivo.get_sheet_by_name('Hoja1')
     totallista = lista.rows
+    totalfilas = 731
     for fila in totallista:
         contador += 1
         if contador>2:
@@ -177,29 +185,35 @@ def importar_data_excel():
                     descripcionForma = formasPago[0]
                     valorForma = formasPago[1]
                     eFormaPago = FormaPago.objects.get(descripcion=descripcionForma)
-                    eFacturaVentaFormaPago = FacturaVentaFormaPago(
-                        facturaventa=eFacturaVenta,
-                        formapago=eFormaPago,
-                        observacion='migración',
-                        valor=float(valorForma.replace(',', '.')),
-                    )
-                    eFacturaVentaFormaPago.save()
+                    if not FacturaVentaFormaPago.objects.values('id').filter(facturaventa=eFacturaVenta, formapago=eFormaPago).exists():
+                        eFacturaVentaFormaPago = FacturaVentaFormaPago(
+                            facturaventa=eFacturaVenta,
+                            formapago=eFormaPago,
+                            observacion='migración',
+                            valor=float(valorForma.replace(',', '.')),
+                        )
+                        eFacturaVentaFormaPago.save()
+                    else:
+                        eFacturaVentaFormaPago = FacturaVentaFormaPago.objects.filter(facturaventa=eFacturaVenta, formapago=eFormaPago).first()
+                        eFacturaVentaFormaPago.valor=float(valorForma.replace(',', '.'))
+                        eFacturaVentaFormaPago.save()
 
-                    eFacturaVentaDetalle = FacturaVentaDetalle(
-                        facturaventa=eFacturaVenta,
-                        itemunidadmedidastock_id=int(itemunidadmedidastock_id),
-                        cantidad=cantidad,
-                        precio=float(precio.replace(',', '.')),
-                        subtotal=float(subtotal.replace(',', '.')),
-                        impuesto_id=int(impuesto_id),
-                        valorimpuesto=float(valorimpuesto.replace(',', '.')),
-                        total=float(totaldetalle.replace(',', '.')),
-                        porcentaje_ganancia=float(porcentaje_ganancia.replace(',', '.')),
-                        ganancia=float(ganancia.replace(',', '.')),
-                        costo=float(costo.replace(',', '.')))
-                    eFacturaVentaDetalle.save()
+                    if not FacturaVentaDetalle.objects.values('id').filter(facturaventa=eFacturaVenta, itemunidadmedidastock_id=int(itemunidadmedidastock_id)).exists():
+                        eFacturaVentaDetalle = FacturaVentaDetalle(
+                            facturaventa=eFacturaVenta,
+                            itemunidadmedidastock_id=int(itemunidadmedidastock_id),
+                            cantidad=cantidad,
+                            precio=float(precio.replace(',', '.')),
+                            subtotal=float(subtotal.replace(',', '.')),
+                            impuesto_id=int(impuesto_id),
+                            valorimpuesto=float(valorimpuesto.replace(',', '.')),
+                            total=float(totaldetalle.replace(',', '.')),
+                            porcentaje_ganancia=float(porcentaje_ganancia.replace(',', '.')),
+                            ganancia=float(ganancia.replace(',', '.')),
+                            costo=float(costo.replace(',', '.')))
+                        eFacturaVentaDetalle.save()
                     fila[26].value = "REGISTRO ACTUALIZADO"
-                    print(f"({total}/{contador}) Se guardo/actualizo: {eFacturaVenta.__str__()}")
+                    print(f"({contador}/{totalfilas}) Se guardo/actualizo: {eFacturaVenta.__str__()}")
                 except Exception as ex:
                     transaction.set_rollback(True)
                     print(f"Ocurrio un error {ex.__str__()}")
@@ -208,21 +222,58 @@ def importar_data_excel():
     miarchivo.save("facturasVenta.xlsx")
     print("FIN: ", miarchivo)
 
-# importar_data_excel()
+#importar_data_excel()
+
 
 # CONSULTAS
 
-# Selecciona un objeto de la clase UnidadMedida cuyo ID sea 11. Esta consulta espera exactamente un resultado y arrojará un error si no encuentra ningún objeto o si encuentra más de uno.
-unidadMedida=UnidadMedida.objects.get(id=11)
-# Selecciona todos los objetos de la clase UnidadMedida cuyo ID sea 11. Esta consulta devuelve un conjunto de objetos, que puede estar vacío si no se encuentra ningún objeto con el ID especificado.
-unidadesMedida=UnidadMedida.objects.filter(id=11)
-# Selecciona todos los objetos de la clase UnidadMedida que tengan el atributo status igual a True, y los ordena por el atributo unidad.
-unidadesMedidas=UnidadMedida.objects.filter(status=True).order_by('unidad')
-# Selecciona todos los objetos de la clase UnidadMedida y los ordena por el atributo unidad. Esta consulta devuelve todos los objetos de esa clase.
-unidadesMedidas_1=UnidadMedida.objects.all().order_by('unidad')
-# Selecciona solo el atributo id de todos los objetos de la clase Item cuyo status sea True.
-soloid=Item.objects.only("id").filter(status=True)
-# Verifica si hay al menos un objeto de la clase Item con el atributo status igual a True.
-existe1=Item.objects.only("id").filter(id=10000).exists()
-# Selecciona el primer objeto de la clase Item que tenga el atributo status igual a True.
-primerV1=Item.objects.filter(status=True).first()
+
+unidadMedida = UnidadMedida.objects.get(id=11)
+
+unidadMedidaV2 = UnidadMedida.objects.filter(id=11)
+# str(UnidadMedida.objects.filter(id=11).query)
+
+unidadMedidas = UnidadMedida.objects.filter(status=True).order_by('unidad')
+
+unidadMedidas_1 = UnidadMedida.objects.all().order_by('unidad')
+
+soloid = Item.objects.only('id').filter(status=True)
+
+existe1 = Item.objects.only('id').filter(status=True).exists()
+
+primerV1 = Item.objects.filter(status=True).first()
+
+primerV2 = Item.objects.filter(status=True).last()
+
+primerV3 = Item.objects.filter(status=True)[0]
+
+primerV4 = Item.objects.filter(status=True).order_by("-id")[0]
+
+total_devices = ItemUnidadMedidaStock.objects.filter(itemunidadmedida__item__marca_id=9, status=True).aggregate(total=Avg('stock'))['total']
+
+facturaxfecha_promedio = FacturaVenta.objects.filter(status=True,fechafactura__gte="2023-05-01",fechafactura__lte="2025-05-10").aggregate(venta=Avg(F("total"), output_field=FloatField())).get('venta')
+
+facturaxfecha_suma = FacturaVenta.objects.filter(status=True,fechafactura__gte="2023-05-01",fechafactura__lte="2025-05-10").aggregate(venta=Sum(F("total"), output_field=FloatField())).get('venta')
+
+facturasxfecha = FacturaVenta.objects.filter(status=True, fechafactura__gte="2023-05-01", fechafactura__lte="2025-05-10")
+
+facturasxconcoincidencia = FacturaVenta.objects.filter(Q(numero__icontains="001") | Q(codigo__icontains="001"), status=True)
+
+cantxconincidencia = FacturaVenta.objects.filter((Q(numero__icontains="001") | Q(codigo__icontains="001"))).count()
+
+cantxconincidenciaV1 = len(FacturaVenta.objects.filter(Q(numero__icontains="001") | Q(codigo__icontains="001"), status=True))
+
+
+
+
+facturasV2 = FacturaVenta.objects.select_related().filter(status=True)
+
+listafacturas_lista = FacturaVenta.objects.values_list("id", flat=True).filter(status=True)
+
+listafacturas_lisV2 = FacturaVenta.objects.values("id").filter(status=True)
+
+facturasdeventa = FacturaVenta.objects.filter(status=True).annotate(es_efectivo=Exists(FacturaVentaFormaPago.objects.filter(status=True, formapago__id=2, facturaventa_id=OuterRef("id"))))
+
+maximo = FacturaVenta.objects.filter(status=True).aggregate(mayor=Max("fechafactura"))["mayor"]
+
+minimo = FacturaVenta.objects.filter(status=True).aggregate(menor=Min("fechafactura"))["menor"]
