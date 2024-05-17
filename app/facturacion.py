@@ -14,9 +14,14 @@ import json
 from decimal import Decimal
 from django.template.loader import get_template
 from django.db.models import Sum
-from app.funciones import round_half_up
+from app.funciones import round_half_up,conviert_html_to_pdfsaveqr_facturaVenta,remover_caracteres_tildes_unicode,remover_caracteres_especiales_unicode
 from app.convertirhtml2pdf import conviert_html_to_pdf
 from django.db.models import Q
+import os
+from app.settings import SITE_STORAGE
+import random
+import pyqrcode
+import sys
 @login_required(redirect_field_name='ret', login_url='/login')
 @transaction.atomic()
 def view(request):
@@ -167,8 +172,6 @@ def view(request):
                                         subtotal=subtotal,
                                         impuesto=item.impuesto,
                                         valorimpuesto=valorimpuesto,
-                                        descuento_aplicado=descuento_aplicado,
-                                        descuento=valordcto,
                                         total=total,
                                         porcentaje_ganancia=porcentajeganancia,ganancia=ganancia,
                                         costo=itemumstock.costo_unitario
@@ -446,6 +449,31 @@ def view(request):
                 except Exception as ex:
                     pass
 
+            elif action == 'imprimir_facturaA4':
+                try:
+                    data['factura'] =fv= FacturaVenta.objects.get(pk=request.GET['id'])
+                    data['detalle'] = fv.facturaventadetalle_set.filter(status=True)
+
+                    return conviert_html_to_pdf(
+                        'facturacion/imprimir_facturaA4.html',
+                        {
+                            'data': data,
+                        }
+                    )
+                except Exception as ex:
+                    pass
+
+            elif action == 'imprimir_factura_qr':
+                try:
+                    import uuid
+                    fv = FacturaVenta.objects.get(pk=request.GET['id'])
+                    resultados_errores = generarArchivoQR(fv, data)
+                    if len(resultados_errores) > 0:
+                        return JsonResponse({"result": "bad", "mensaje": u"Problemas al generar el pdf. " + str(resultados_errores)})
+                    else:
+                        return JsonResponse({"result": "ok", "mensaje": u"PDF generado exitósamente"})
+                except Exception as ex:
+                    return JsonResponse({"result": "bad", "mensaje": u"Problemas al ejecutar el reporte. %s" % ex})
 
             elif action == 'consulta_valor_descuento':
                 try:
@@ -702,3 +730,40 @@ def view(request):
                 return render(request, "facturacion/view.html", data)
             except Exception as ex:
                 pass
+def generarArchivoQR(factura, data, IS_DEBUG=False):
+    dominio_sistema = 'http://127.0.0.1:8010'
+    lista_errores = []
+    with transaction.atomic():
+        try:
+            temp = lambda x: remover_caracteres_tildes_unicode(remover_caracteres_especiales_unicode(x.__str__()))
+            data['factura'] = factura
+            data['detalle'] = FacturaVentaDetalle.objects.filter(facturaventa=factura,status=True)
+            qrname = 'qr_facturaVenta_' + str(factura.id)
+            folder = os.path.join(os.path.join(SITE_STORAGE, 'media', 'qrcode', 'facturaVenta', 'qr'))
+            directory = os.path.join(os.path.join(SITE_STORAGE, 'media', 'qrcode', 'facturaVenta'))
+            os.makedirs(f'{directory}/qr/', exist_ok=True)
+            try:
+                os.stat(directory)
+            except:
+                os.mkdir(directory)
+            codigo_factura = temp(factura.codigo.__str__()).replace(' ', '_')
+            htmlname = 'FACTURA_No{}_{}'.format(codigo_factura, random.randint(1, 100000).__str__())
+            urlname = "/media/qrcode/facturaVenta/%s" % htmlname
+            # rutahtml = SITE_STORAGE + urlname
+            data['url_qr'] = url_qr = f'{SITE_STORAGE}/media/qrcode/facturaVenta/qr/{htmlname}.png'
+            # if os.path.isfile(rutahtml):
+            #     os.remove(rutahtml)
+            url = pyqrcode.create(f'{dominio_sistema}/media/qrcode/facturaVenta/{htmlname}.pdf')
+            imageqr = url.png(f'{directory}/qr/{htmlname}.png', 16, '#000000')
+            data['qrname'] = 'qr' + qrname
+            valida = conviert_html_to_pdfsaveqr_facturaVenta(
+                'facturacion/factura_qr.html',
+                {'pagesize': 'A4', 'data': data},
+                htmlname + '.pdf'
+            )
+            if valida:
+                factura.rutapdf = 'qrcode/facturaVenta/' + htmlname + '.pdf'
+                factura.save()
+        except Exception as ex:
+            lista_errores.append(f'{factura.codigo} [{factura.id}] error {str(ex)} on line {str(sys.exc_info()[-1].tb_lineno)}\n')
+    return lista_errores

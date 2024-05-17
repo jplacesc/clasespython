@@ -969,7 +969,7 @@ class FacturaVenta(ModeloBase):
     valida = models.BooleanField(default=True, verbose_name=u"Valida")
     pagada = models.BooleanField(default=False, verbose_name=u"Pagada")
     tipo = models.IntegerField(choices=TipoFacturaVenta.choices, default=TipoFacturaVenta.NOTAVENTA, verbose_name=u'Tipo de factura de venta')
-
+    rutapdf = models.FileField(upload_to='qrcode/facturaVenta', blank=True, null=True,  verbose_name=u'Archivo factura qr pdf')
     def __str__(self):
         return u'%s - %s' % (self.codigo, self.cliente.nombre_completo())
 
@@ -1081,7 +1081,7 @@ class ModeloEjemplo(ModeloBase):
     descripcion = models.TextField(blank=True, null=True, verbose_name=u"descripción")
     pais= models.ForeignKey(Pais,blank=True, null=True, verbose_name=u"Pais", on_delete=models.SET_NULL)
     opcion = models.ManyToManyField(OpcionModulo, verbose_name=u'Opcion de modulo')
-    fechaInicio = models.DateField(verbose_name=u"Fecha de inicio",default=datetime.now().date(), null=True, blank=True)
+    fechaInicio = models.DateField(verbose_name=u"Fecha de inicio",auto_now=True, null=True, blank=True)
     fechaFin = models.DateTimeField(verbose_name=u'Fecha de fin',auto_now=True, null=True, blank=True)
     archivo = models.FileField(upload_to='archivoEjemplo/%Y/%m/%d/', blank=True, null=True, verbose_name=u'Archivo')
 
