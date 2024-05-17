@@ -449,19 +449,6 @@ def view(request):
                 except Exception as ex:
                     pass
 
-            elif action == 'imprimir_facturaA4':
-                try:
-                    data['factura'] =fv= FacturaVenta.objects.get(pk=request.GET['id'])
-                    data['detalle'] = fv.facturaventadetalle_set.filter(status=True)
-
-                    return conviert_html_to_pdf(
-                        'facturacion/imprimir_facturaA4.html',
-                        {
-                            'data': data,
-                        }
-                    )
-                except Exception as ex:
-                    pass
 
             elif action == 'imprimir_factura_qr':
                 try:
