@@ -174,22 +174,10 @@ def view(request):
         elif action == 'detalles':
             try:
                 from django.db.models import F
-                item = Item.objects.get(pk=encrypt(request.POST['iddet']))
+                item = Item.objects.get(pk=request.POST['iddet'])
                 equivalencias = ItemUnidadMedidaEquivalencia.objects.filter(status=True, itemunidadmedida__item=item, itemunidadmedida__item__status=True).exclude(unidad_medida_origen=F('unidad_medida_fin')).order_by('-orden')
-                # ofertas = OfertaItem.objects.filter(status=True,itemunidadmedida=stock.itemunidadmedida)
                 template = get_template("view_stock/detalles.html")
                 json_content = template.render({'equivalencias': equivalencias})
-                return JsonResponse({"result": "ok", 'html': json_content})
-            except Exception as ex:
-                return JsonResponse({"result": "bad", "mensaje": u"Error al obtener los datos."})
-
-        elif action == 'ofertas':
-            try:
-                from django.db.models import F
-                itemumstock = ItemUnidadMedidaStock.objects.get(pk=encrypt(request.POST['iddet']))
-                ofertas = OfertaItem.objects.filter(status=True,itemunidadmedida=itemumstock.itemunidadmedida)
-                template = get_template("view_stock/ofertas.html")
-                json_content = template.render({'ofertas': ofertas})
                 return JsonResponse({"result": "ok", 'html': json_content})
             except Exception as ex:
                 return JsonResponse({"result": "bad", "mensaje": u"Error al obtener los datos."})

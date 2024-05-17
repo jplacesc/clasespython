@@ -214,19 +214,13 @@ def view(request):
             try:
                 id=int(request.POST['id'])
                 lista = []
-                if id > 0:
-                    orden = OrdenPedido.objects.get(pk=request.POST['id'])
-                    if orden.ordenpedidodetalle_set.values('id').filter(status=True).exists():
-                        for item in orden.ordenpedidodetalle_set.values('itemunidadmedidastock__itemunidadmedida__item_id','itemunidadmedidastock__itemunidadmedida__item__descripcion').filter(status=True, itemunidadmedidastock__itemunidadmedida__item__status=True).distinct('itemunidadmedidastock__itemunidadmedida__item__id'):
-                            lista.append([item['itemunidadmedidastock__itemunidadmedida__item_id'], u'%s' % (item['itemunidadmedidastock__itemunidadmedida__item__descripcion']) ])
-                else:
-                    from django.db.models import F
-                    if ItemUnidadMedidaStock.objects.values_list('itemunidadmedida__item_id').filter(status=True, sucursal=sucursalsesion, itemunidadmedida__item__status=True).exists():
-                        for item in ItemUnidadMedidaStock.objects.values('itemunidadmedida__item_id','itemunidadmedida__item__descripcion','itemunidadmedida__item__codigo'
-                                                                         ).filter(Q(stock__gte=1),
-                                                                                  # Q(stock__gt=F('stockcomprometido')),
-                                                                                  status=True, sucursal=sucursalsesion, itemunidadmedida__item__status=True).distinct('itemunidadmedida__item__id'):
-                            lista.append([item['itemunidadmedida__item_id'], u'%s / %s' % (item['itemunidadmedida__item__codigo'],item['itemunidadmedida__item__descripcion'])])
+                from django.db.models import F
+                if ItemUnidadMedidaStock.objects.values_list('itemunidadmedida__item_id').filter(status=True, sucursal=sucursalsesion, itemunidadmedida__item__status=True).exists():
+                    for item in ItemUnidadMedidaStock.objects.values('itemunidadmedida__item_id','itemunidadmedida__item__descripcion','itemunidadmedida__item__codigo'
+                                                                     ).filter(Q(stock__gte=1),
+                                                                              # Q(stock__gt=F('stockcomprometido')),
+                                                                              status=True, sucursal=sucursalsesion, itemunidadmedida__item__status=True).distinct('itemunidadmedida__item__id'):
+                        lista.append([item['itemunidadmedida__item_id'], u'%s / %s' % (item['itemunidadmedida__item__codigo'],item['itemunidadmedida__item__descripcion'])])
                 return JsonResponse({'result': 'ok', 'lista': lista})
             except Exception as ex:
                 return JsonResponse({"result": "bad", "mensaje": u"Error al obtener los datos."})
@@ -235,17 +229,9 @@ def view(request):
             try:
                 lista = []
                 item = Item.objects.get(pk=request.POST['id'])
-                if request.POST['idorden']!='NaN':
-                    orden = OrdenPedido.objects.get(id=int(request.POST['idorden']))
-                    if orden.ordenpedidodetalle_set.values('id').filter(status=True).exists():
-                        for ordend in orden.ordenpedidodetalle_set.values('itemunidadmedidastock__itemunidadmedida__unidad_medida_id', 'itemunidadmedidastock__itemunidadmedida__unidad_medida__descripcion').filter(status=True, itemunidadmedidastock__sucursal=sucursalsesion,
-                                                                                                                                                                                                                     itemunidadmedidastock__itemunidadmedida__item=item).distinct(
-                            'itemunidadmedidastock__itemunidadmedida__unidad_medida_id'):
-                            lista.append([ordend['itemunidadmedidastock__itemunidadmedida__unidad_medida_id'], u'%s' % (ordend['itemunidadmedidastock__itemunidadmedida__unidad_medida__descripcion'])])
-                else:
-                    if item.itemunidadmedida_set.filter(status=True).exists():
-                        for um in item.itemunidadmedida_set.filter(status=True).order_by('orden'):
-                            lista.append([um.unidad_medida.id, um.unidad_medida.descripcion])
+                if item.itemunidadmedida_set.filter(status=True).exists():
+                    for um in item.itemunidadmedida_set.filter(status=True).order_by('orden'):
+                        lista.append([um.unidad_medida.id, um.unidad_medida.descripcion])
                 return JsonResponse({'result': 'ok', 'lista': lista,'unidad_base':item.unidad_base_id})
             except Exception as ex:
                 return JsonResponse({"result": "bad", "mensaje": u"Error al obtener los datos."})
@@ -462,59 +448,6 @@ def view(request):
                 except Exception as ex:
                     return JsonResponse({"result": "bad", "mensaje": u"Problemas al ejecutar el reporte. %s" % ex})
 
-            elif action == 'consulta_valor_descuento':
-                try:
-                    oferta = OfertaItem.objects.get(status=True, pk=request.GET['id'])
-                    return JsonResponse({'result': 'ok', 'valor': oferta.porcentajedescuento})
-                except Exception as ex:
-                    return JsonResponse({"result": "bad", "mensaje": u"Error al obtener los datos."})
-
-            elif action == 'calcular_costos_orden':
-                try:
-                    iddet=int(request.GET['iddet']) if request.GET['iddet'] else 0
-                    cantidad = float(request.GET['cantidad'])
-                    detalle = OrdenPedidoDetalle.objects.get(id=iddet)
-                    precio = 0
-                    subtotal_unitario = 0
-                    iva0 = 0
-                    subtotal = 0
-                    costoiva=float(detalle.itemunidadmedidastock.itemunidadmedida.item.impuesto.valor)
-                    preciooriginal = float(detalle.itemunidadmedidastock.precio if detalle.itemunidadmedidastock.precio else 0)
-                    total=0
-                    valor_descuento_total=0
-
-                    if detalle.descuento_aplicado > 0:
-                        precio = float(detalle.descuento_aplicado)
-                        if costoiva > 0:
-                            precio_descuento_sin_iva = precio / (1 + (costoiva / 100))
-                            precio_costo_sin_iva =preciooriginal / (1 + (costoiva / 100))
-                            valor_descuento_unitario=precio_costo_sin_iva-precio_descuento_sin_iva
-                            subtotal = round_half_up(precio_costo_sin_iva * cantidad,4)
-                            valor_descuento_total=round_half_up(valor_descuento_unitario*cantidad,4)
-                            valor_antes_iva=subtotal-valor_descuento_total
-                            iva0=round_half_up(valor_antes_iva*(costoiva / 100),4)
-                            total = round_half_up(valor_antes_iva+iva0, 4)
-                        else:
-                            valor_descuento_unitario = preciooriginal - precio
-                            subtotal = round_half_up(preciooriginal * cantidad, 4)
-                            valor_descuento_total = round_half_up(valor_descuento_unitario * cantidad, 4)
-                            valor_antes_iva = subtotal - valor_descuento_total
-                            iva0 = 0
-                            total = round_half_up(valor_antes_iva + iva0, 4)
-                    else:
-                        if costoiva > 0:
-                            precio_costo_sin_iva = preciooriginal / (1 + (costoiva / 100))
-                            subtotal = round_half_up(precio_costo_sin_iva * cantidad, 2)
-                            iva0 = round_half_up(subtotal * (costoiva / 100), 4)
-                            total = round_half_up(preciooriginal * cantidad, 4)
-                        else:
-                            subtotal = round_half_up(preciooriginal * cantidad, 2)
-                            iva0 = 0
-                            total = round_half_up(subtotal, 4)
-                    return JsonResponse({'result': 'ok', 'iva0': iva0,'subtotal':subtotal,'total':total,'precio':precio,'valordcto':valor_descuento_total})
-                except Exception as ex:
-                    return JsonResponse({"result": "bad", "mensaje": u"Error al obtener los datos."})
-
             elif action == 'calcular_costos_factura_venta':
                 try:
                     precio=0
@@ -591,14 +524,6 @@ def view(request):
                     return JsonResponse({"result": "bad", "mensaje": u"Error al obtener los datos."})
 
 
-            elif action == 'detalleorden':
-                try:
-                    data['orden'] =orden = OrdenPedido.objects.get(pk=request.GET['id'])
-                    data['title'] = u'Detalle de Orden de Pedido'
-                    data['detalles'] = orden.ordenpedidodetalle_set.filter(status=True)
-                    return render(request, "facturacion/detalleorden.html", data)
-                except Exception as ex:
-                    pass
 
             elif action == 'devoluciones':
                 try:
