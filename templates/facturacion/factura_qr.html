@@ -1,0 +1,56 @@
+{% load extras %}
+{% block heading %}
+    <meta charset=UTF-8">
+    <title>PDF FACTURA</title>
+{% endblock %}
+{% block canvas %}
+<style type="text/css">
+        @page {
+           size: A4 landscape;
+            top: 0.2cm;
+            left: 0.75cm;
+            right: 0.75cm;
+            bottom: 0cm;
+            @frame {
+                -pdf-frame-content: company_logo;
+                left: 5cm;
+                right: 5cm;
+                bottom: -2cm;
+                top: 0cm;
+            }
+            @frame {
+                -pdf-frame-content: evolucion_logo;
+                left: 10cm;
+                right: 10cm ;
+                bottom: 1cm;
+                top: 0cm;
+            }
+        }
+
+        @page maintmpl {
+            top: 0.2cm;
+            left: 2cm;
+            right: 2cm;
+            bottom: 0cm;
+            @frame {
+                -pdf-frame-content: footerContent;
+                bottom: 0cm;
+                margin-left: 1cm;
+                margin-right: 1cm;
+                text-align: right;
+                height: 1cm;
+            }
+        }
+ </style>
+    <table style="vertical-align: middle; border: #0a0d1e">
+        <tr>{{ data.factura }}</tr>
+        <tr>CERTIFICADO PYTHON</tr>
+        <tr style="text-align:center; padding-bottom: 10px">
+            <td>Código
+                <img src="{% get_image_path data.url_qr %}"
+                     alt="hollaaaaaaaa" width="50" height="50" ><br>
+            </td>
+        </tr>
+    </table>
+
+{% endblock %}

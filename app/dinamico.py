@@ -14,11 +14,9 @@ from datetime import datetime, timedelta
 import json
 from decimal import Decimal
 from django.template.loader import get_template
-from django.db.models import Sum
+from django.db.models import Q,  Sum,Count
 from app.funciones import round_half_up
 from app.convertirhtml2pdf import conviert_html_to_pdf
-from django.db.models import Q
-
 @login_required(redirect_field_name='ret', login_url='/login')
 def view(request):
     data = {}
@@ -73,6 +71,35 @@ def view(request):
                 return response
             except Exception as ex:
                 return JsonResponse({'result': 'bad', "mensaje": u"Error al obtener los datos"})
+
+        elif action == 'graficos':
+            try:
+                data['title'] = u'graficos'
+                lista = []
+                grafico_burbuja = []
+                grafico_circulo = []
+                lista_factura = FacturaVenta.objects.values('vendedor__vendedor_id').annotate(
+                    total_facturas=Count('id'))
+                for dato in lista_factura:
+                    eVendedor=Vendedor.objects.get(id=dato['vendedor__vendedor_id'])
+                    nombre_Completo=eVendedor.nombre_completo()
+                    grafico_burbuja.append({
+                            "name": nombre_Completo,
+                            "data": [{
+                                    "name": nombre_Completo,
+                                    "value":dato['total_facturas']
+                                      }]
+                            })
+                    grafico_circulo.append({
+                                        "name": nombre_Completo,
+                                        "y": dato['total_facturas']
+                                        })
+                data['grafico_circulo'] = grafico_circulo
+                data['grafico_burbuja'] = grafico_burbuja
+                return render(request, "dinamico/graficos.html", data)
+            except Exception as ex:
+                return bad_json(mensaje=ex.__str__())
+
 
         return JsonResponse({"result": "bad", "mensaje": u"Solicitud Incorrecta."})
     else:

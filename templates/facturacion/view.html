@@ -276,6 +276,13 @@
                                        data-original-title="Imprimir Factura A6">
                                         <i class="fa fa-print"></i>
                                     </a>
+                                    <a target="_blank" class="btn btn-sm btn-default"
+                                       href='/facturacion?action=imprimir_factura_qr&id={{ factura.id }}'
+                                       data-toggle="tooltip"
+                                       data-placement="top"
+                                       data-original-title="Imprimir Factura QR">
+                                        <i class="fa fa-print"></i>
+                                    </a>
 {#                                {% if not factura.en_uso and factura.valida  %}#}
 {#                                    {% if usuario.is_superuser %}#}
 {#                                        <a class="btn btn-danger btn-sm"#}

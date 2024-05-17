@@ -1,0 +1,141 @@
+{% extends "index.html" %}
+{% load extras %}
+{% block cabecera %}
+    <script type="text/javascript" src="/static/js/jquery.isloading.min.js"></script>
+    <link rel="stylesheet" href="/static/highcharts/css/style.css"/>
+{#    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.11/c3.min.css">#}
+{#    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>#}
+{#    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>#}
+{#    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>#}
+{#    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.11/c3.min.js"></script>#}
+
+    <script src="/static/highcharts/highcharts.js"></script>
+    <script src="/static/highcharts/highcharts-more.js"></script>
+    <script src="/static/highcharts/modules/exporting.js"></script>
+    <script src="/static/highcharts/modules/export-data.js"></script>
+    <script src="/static/highcharts/modules/accessibility.js"></script>
+    <script src="/static/highcharts/functions.js"></script>
+{#    <script src="https://code.highcharts.com/highcharts.js"></script>#}
+{#    <script src="https://code.highcharts.com/modules/exporting.js"></script>#}
+{#    <script src="https://code.highcharts.com/modules/accessibility.js"></script>#}
+    <script type="text/javascript">
+        $(function () {
+            Highcharts.chart('container', {
+                chart: {
+                    type: 'packedbubble',
+                    height: '100%'
+                },
+                title: {
+                    text: 'Cantidad Facturas',
+                    align: 'left'
+                },
+                tooltip: {
+                    useHTML: true,
+                    pointFormat: '<b>{point.name}:</b> {point.value}'
+                },
+                plotOptions: {
+                    packedbubble: {
+                        minSize: '30%',
+                        maxSize: '120%',
+                        zMin: 0,
+                        zMax: 1000,
+                        layoutAlgorithm: {
+                            splitSeries: false,
+                            gravitationalConstant: 0.02
+                        },
+                        dataLabels: {
+                            enabled: true,
+                            format: '{point.name}',
+                            filter: {
+                                property: 'y',
+                                operator: '>',
+                                value: 250
+                            },
+                            style: {
+                                color: 'black',
+                                textOutline: 'none',
+                                fontWeight: 'normal'
+                            }
+                        }
+                    }
+                },
+                series:{{ grafico_burbuja|safe }}
+            });
+
+
+           Highcharts.chart('container2', {
+                    chart: {
+                        type: 'pie'
+                    },
+                    title: {
+                        text: 'Ventas por vendedor'
+                    },
+                    tooltip: {
+                        valueSuffix: '%'
+                    },
+                    plotOptions: {
+                        series: {
+                            allowPointSelect: true,
+                            cursor: 'pointer',
+                            dataLabels: [{
+                                enabled: true,
+                                distance: 20
+                            }, {
+                                enabled: true,
+                                distance: -40,
+                                format: '{point.percentage:.1f}%',
+                                style: {
+                                    fontSize: '1.2em',
+                                    textOutline: 'none',
+                                    opacity: 0.7
+                                },
+                                filter: {
+                                    operator: '>',
+                                    property: 'percentage',
+                                    value: 10
+                                }
+                            }]
+                        }
+                    },
+                    series: [{
+                        name: 'Porcentaje',
+                        colorByPoint: true,
+                        data: {{ grafico_circulo|safe }}
+                    }]
+                });
+
+        });
+    </script>
+
+
+{% endblock %}
+{% block atras-titulo %}
+    <div class="section-header-back">
+        <div class="row">
+            <div class="col-1">
+                <a href="/" class="btn btn-light btn-icon-split">
+                        <span class="icon text-white-50">
+                            <i class="fas fa-arrow-left"></i>
+                        </span>
+                </a>
+            </div>
+            <div class="col-11">
+                <h6 class="m-0 font-weight-bold text-primary">{{ title }}</h6>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block cuerpo %}
+
+    <div class="card-body">
+        <figure class="highcharts-figure">
+            <div id="container"></div>
+            <hr>
+            <div id="container2"></div>
+            <p class="highcharts-description">
+
+            </p>
+        </figure>
+    </div>
+
+{% endblock %}

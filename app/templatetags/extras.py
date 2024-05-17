@@ -4,7 +4,7 @@ from _decimal import Decimal
 from django import template
 
 from datetime import datetime, timedelta, date
-
+from django.core.files.storage import default_storage
 register = template.Library()
 
 
@@ -107,6 +107,10 @@ def diaenletra(dia):
     arreglo = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO']
     return arreglo[dia -1 ]
 
+@register.simple_tag
+def get_image_path(image_path):
+    path = default_storage.path(image_path)
+    return path
 
 
 register.filter('diaenletra', diaenletra)
