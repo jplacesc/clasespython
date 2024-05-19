@@ -21,8 +21,10 @@ import unicodedata
 import socket
 from decimal import Decimal, ROUND_HALF_UP
 from datetime import datetime
-
-
+from django.template.loader import get_template
+from app.settings import SITE_STORAGE,MEDIA_ROOT,MEDIA_URL
+import app.settings
+from xhtml2pdf import pisa
 unicode = str
 
 
@@ -278,4 +280,23 @@ def convertirfechahorainvertida(fecha):
     except Exception as ex:
         return datetime.now()
 
+def conviert_html_to_pdfsaveqr_facturaVenta(template_src, context_dict, filename):
+    template = get_template(template_src)
+    html = template.render(context_dict).encode(encoding="UTF-8")
+    result = StringIO.BytesIO()
+    output_folder = os.path.join(SITE_STORAGE, 'media', 'qrcode', 'facturaVenta')
+    filepdf = open(output_folder + os.sep + filename, "w+b")
+    links = lambda uri, rel: os.path.join(MEDIA_ROOT, uri.replace(MEDIA_URL, ''))
+    pdf1 = pisa.pisaDocument(StringIO.BytesIO(html), dest=filepdf, link_callback=links)
+    pisaStatus = pisa.CreatePDF(StringIO.BytesIO(html), result, link_callback=links)
+    if not pdf1.err:
+            return True
+    return JsonResponse({"result": "bad", "mensaje": u"Problemas al ejecutar el certificado."})
 
+def remover_caracteres_tildes_unicode(cadena):
+    return cadena.replace(u'Á', u'A').replace(u'á', u'a').replace(u'É', u'E').replace(u'é', u'e').replace(u'Í',
+                                                                                                          u'I').replace(
+        u'í', u'i').replace(u'Ó', u'O').replace(u'ó', u'o').replace(u'Ú', u'U').replace(u'ú', u'u')
+
+def remover_caracteres_especiales_unicode(cadena):
+    return cadena.replace(u'ñ', u'n').replace(u'Ñ', u'N').replace(u'Á', u'A').replace(u'á', u'a').replace(u'É', u'E').replace(u'é', u'e').replace(u'Í', u'I').replace(u'í', u'i').replace(u'Ó', u'O').replace(u'ó', u'o').replace(u'Ú', u'U').replace(u'ú', u'u')

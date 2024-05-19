@@ -530,28 +530,6 @@ class Sucursal(ModeloBase):
         cant=FacturaVenta.objects.values('id').filter(status=True,valida=True,fecha__icontains=datetime.now().date()).count()
         return cant
 
-    def numero_ordenes_hoy(self, usuario):
-        cant=0
-        if usuario.is_superuser:
-            if OrdenPedido.objects.values('id').filter(Q(fechapedido__icontains=datetime.now().date()),vendedor__sucursal=self,status=True).exists():
-                cant= OrdenPedido.objects.values('id').filter(Q(fechapedido__icontains=datetime.now().date()),vendedor__sucursal=self,status=True).count()
-        else:
-            if OrdenPedido.objects.values('id').filter(Q(fechapedido__icontains=datetime.now().date()),vendedor__sucursal=self,status=True,vendedor__vendedor__usuario=usuario).exists():
-                cant= OrdenPedido.objects.values('id').filter(Q(fechapedido__icontains=datetime.now().date()),vendedor__sucursal=self,status=True,vendedor__vendedor__usuario=usuario).count()
-        return cant
-
-    def monto_ordenes(self, usuario):
-        suma=0
-        if usuario.is_superuser:
-            if OrdenPedidoDetalle.objects.values('id').filter(Q(ordenpedido__fechapedido__icontains=datetime.now().date()),ordenpedido__vendedor__sucursal=self,status=True).exists():
-                suma=round_half_up( float(OrdenPedidoDetalle.objects.filter(Q(ordenpedido__fechapedido__icontains=datetime.now().date()),ordenpedido__vendedor__sucursal=self,status=True).aggregate(suma=Sum('total'))['suma']),2)
-        else:
-            if OrdenPedidoDetalle.objects.values('id').filter(Q(ordenpedido__fechapedido__icontains=datetime.now().date()),ordenpedido__vendedor__sucursal=self,status=True,ordenpedido__vendedor__vendedor__usuario=usuario).exists():
-                suma = round_half_up(float(OrdenPedidoDetalle.objects.filter(Q(ordenpedido__fechapedido__icontains=datetime.now().date()),ordenpedido__vendedor__sucursal=self,status=True,ordenpedido__vendedor__vendedor__usuario=usuario).aggregate(suma=Sum('total'))['suma']),2)
-        return suma
-
-
-
     def save(self, *args, **kwargs):
         self.nombre_comercial = self.nombre_comercial.upper()
         self.actividad_economica = self.actividad_economica.upper()
@@ -862,17 +840,6 @@ class ItemUnidadMedida(ModeloBase):
         verbose_name = u"Item Unidad de Medida"
         verbose_name_plural = u"Items Unidades de Medida"
 
-    def en_uso(self):
-        if self.detallemovimientoinventario_set.values('id').filter(status=True).exists():
-            return True
-        if self.itemunidadmedidastock_set.values('id').filter(status=True).exists():
-            return True
-        if self.transferenciadetalle_set.values('id').filter(status=True).exists():
-            return True
-        if self.ofertaitem_set.values('id').filter(status=True).exists():
-            return True
-        return False
-
     def nombre_completo(self):
         return "%s / %s" % (self.item.descripcion, self.unidad_medida.descripcion)
 
@@ -930,11 +897,6 @@ class ItemUnidadMedidaStock(ModeloBase):
     def en_uso(self):
         if self.facturaventadetalle_set.values('id').filter(status=True).exists():
             return True
-        if self.ordenpedidodetalle_set.values('id').filter(status=True).exists():
-            return True
-        if self.notacreditodetalle_set.values('id').filter(status=True).exists():
-            return True
-        return False
 
     def nombre_item(self):
         return u'%s (%s)  %s ' % (self.itemunidadmedida.item.codigo, self.itemunidadmedida.item.marca.descripcion,self.itemunidadmedida.item.descripcion)
@@ -969,7 +931,7 @@ class FacturaVenta(ModeloBase):
     valida = models.BooleanField(default=True, verbose_name=u"Valida")
     pagada = models.BooleanField(default=False, verbose_name=u"Pagada")
     tipo = models.IntegerField(choices=TipoFacturaVenta.choices, default=TipoFacturaVenta.NOTAVENTA, verbose_name=u'Tipo de factura de venta')
-
+    rutapdf = models.FileField(upload_to='qrcode/facturaVenta', blank=True, null=True,  verbose_name=u'Archivo factura qr pdf')
     def __str__(self):
         return u'%s - %s' % (self.codigo, self.cliente.nombre_completo())
 
@@ -1081,7 +1043,7 @@ class ModeloEjemplo(ModeloBase):
     descripcion = models.TextField(blank=True, null=True, verbose_name=u"descripción")
     pais= models.ForeignKey(Pais,blank=True, null=True, verbose_name=u"Pais", on_delete=models.SET_NULL)
     opcion = models.ManyToManyField(OpcionModulo, verbose_name=u'Opcion de modulo')
-    fechaInicio = models.DateField(verbose_name=u"Fecha de inicio",default=datetime.now().date(), null=True, blank=True)
+    fechaInicio = models.DateField(verbose_name=u"Fecha de inicio",auto_now=True, null=True, blank=True)
     fechaFin = models.DateTimeField(verbose_name=u'Fecha de fin',auto_now=True, null=True, blank=True)
     archivo = models.FileField(upload_to='archivoEjemplo/%Y/%m/%d/', blank=True, null=True, verbose_name=u'Archivo')
 

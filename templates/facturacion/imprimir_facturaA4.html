@@ -1,0 +1,230 @@
+<meta charset=UTF-8">
+{% block heading %}
+    <title>Factura</title>
+{% endblock %}
+{% block canvas %}
+    <style type="text/css">
+        @page {
+        {#background-image: url('/media/reportes/encabezados_pies/hoja_membretada2.png');#}
+            size: A4;/*size: a4 landscape;*/
+            @frame header_frame {
+            -pdf-frame-content: header_content;
+            left: 1cm;
+            right: 1cm;
+            top: 0.5cm;
+            bottom: 2cm;
+            height: 0cm;
+        }
+
+        @frame content_frame {
+        left: 0.5cm; right: 0.5cm; top: 0.5cm; bottom: 0.5cm;
+        }
+        @frame footer {
+        -pdf-frame-content:footerContent;
+        bottom: 1cm;
+        top: 11cm;
+        margin-left: 1cm;
+        margin-right: 1cm;
+        text-align:right;
+        height: 2cm;
+        }
+        }
+
+        .fa-times-circle:before {
+            font-family: "FontAwesome", sans-serif;
+            content: "\f057";
+        }
+
+        .fa-check-circle:before {
+            font-family: "FontAwesome", sans-serif;
+            content: "\f058";
+        }
+
+        {#        body { height:297mm; width:210mm; margin-left:auto; margin-right:auto; }#}
+
+
+        table {
+        {#width: 630px;#}{#line-height:3px; padding:2.5px;vertical-align:top;#} line-height: 0px;
+            padding: 2.5px;
+            border: 0px solid black;
+        {#table-layout: fixed;#}
+        }
+
+        td {
+            font-family: "Arial Narrow"; /*Verdana, Arial, sans-serif;*/
+            font-size: 11px;
+            text-align: justify;
+        }
+
+        th {
+            font-family: "Arial Narrow"; /*Verdana, Arial, sans-serif;*/
+            font-size: 11px;
+            text-align: justify;
+        }
+
+        p {
+            font-family: "Arial Narrow"; /*Verdana, Arial, sans-serif;*/
+            font-size: 14px;
+            text-align: justify;
+        }
+
+        h4 {
+            line-height: normal;
+        }
+
+@media print {
+   body{
+       font-family: "Arial Narrow";
+   }
+}
+    </style>
+    <div id="content_frame">
+        <table>
+            <tr style="padding: 0;margin: 0" cellpadding="0" cellspacing="0" border="0">
+                <td style="text-align: center"><h1>MI EMPRESA</h1></td>
+            </tr>
+            <tr style="padding: 0;margin: 0" cellpadding="0" cellspacing="0" border="0">
+                <td style="text-align: center"><h3>Ruc: 0998765432001</h3></td>
+            </tr>
+            <tr style="padding: 0;margin: 0" cellpadding="0" cellspacing="0" border="0">
+                <td style="text-align: center"><h3>Telefono:
+                    0987654321
+                </h3></td>
+            </tr>
+            <tr style="padding: 0;margin: 0" cellpadding="0" cellspacing="0" border="0">
+                <td style="text-align: center"><h3>Dirección: {{ data.factura.vendedor.sucursal.direccion }}</h3></td>
+            </tr>
+
+        </table>
+        <p style="margin: 0px;padding: 0;line-height: 0.2">---------------------------------------------------------------------------------------------------------------------------------------------------------------------</p>
+        <table>
+            <tr style="padding: 1px 0px;margin: 0" cellpadding="0" cellspacing="0" border="0">
+                <td>
+                    <h5 style=" line-height: 0.7;">No: {{ data.factura.codigo }} </h5>
+                </td>
+            </tr>
+            <tr style="padding: 1px 0px;margin: 0" cellpadding="0" cellspacing="0" border="0">
+                <td>
+                    <h5 style=" line-height: 0.7;">SUCURSAL: {{ data.factura.vendedor.sucursal.nombre_completo }} </h5>
+                </td>
+            </tr>
+            <tr style="padding: 1px 0px;margin: 0" cellpadding="0" cellspacing="0" border="0">
+                <td>
+                    <h5 style=" line-height: 0.7;">FECHA: {{ data.factura.fechafactura|date:'d-m-Y' }} </h5>
+                </td>
+            </tr>
+            <tr style="padding: 1px 0px;margin: 0" cellpadding="0" cellspacing="0" border="0">
+                <td>
+                    <h1 style=" line-height: normal;">CLIENTE:
+                        {% if data.factura.cliente %}
+                            {{ data.factura.cliente.nombre_completo|upper }}
+                        {% else %}
+                            CONSUMIDOR FINAL
+                        {% endif %}
+                    </h1>
+                </td>
+            </tr>
+            <tr style="padding: 1px 0px;margin: 0" cellpadding="0" cellspacing="0" border="0">
+                <td>
+                    <h3 style=" line-height: normal;">RUC/CED/PAS:
+                        {% if data.factura.cliente %}
+                            {{ data.factura.cliente.identificacion }}
+                        {% else %}
+                            9999999999
+                        {% endif %}
+
+                    </h3>
+                </td>
+            </tr>
+        </table>
+        <p style="margin: 0px;padding: 0;line-height: 0.2">-------------------------------------------------------------------------------------------------------------------------------------------------------------------------</p>
+        <table>
+            <tr style="padding: 0px;margin: 0" cellpadding="0" cellspacing="0" border="0">
+                <td>
+                    <h3>Articulo</h3>
+                </td>
+                <td>
+                    <h3>Cantidad</h3>
+                </td>
+                <td>
+                    <h3>Precio</h3>
+                </td>
+                <td style="text-align: right">
+                    <h3>Sub Total</h3>
+                </td>
+            </tr>
+        </table>
+        <p style="margin: 0px;padding: 0;line-height: 0.2">---------------------------------------------------------------------------------------------------------------------------------------------------------------</p>
+        <table style="margin: 0px;font-family: 'Times New Roman';">
+            {% for d in data.detalle %}
+                <tr style="padding: 0;margin: 0;" cellpadding="0" cellspacing="0" border="0">
+                    <td style="text-align: left;" cellspacing="0" colspan="4">
+                        <h2>{{ d.itemunidadmedidastock.itemunidadmedida.item.descripcion|slice:":50" }}</h2>
+                    </td>
+                </tr>
+                <tr style="padding: 0;margin: 0;" cellpadding="0" cellspacing="0" border="0">
+                    <td style="text-align: left;padding-bottom: 3px;" cellspacing="0" colspan="3">
+                        <h2>&nbsp;&nbsp;{{ d.cantidad|floatformat:0 }}&nbsp;&nbsp;&nbsp;{{ d.itemunidadmedidastock.itemunidadmedida.unidad_medida.simbolo }}&nbsp;&nbsp;&nbsp;${{ d.precio }}</h2>
+                    </td>
+                    <td style="text-align: right;padding-bottom: 3px;" cellspacing="0">
+                        <h2> ${{ d.total|floatformat:2 }}</h2>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+        <br>
+        <table>
+            <tr style="padding: 1px 0;margin: 0;font-size: 8px;" cellpadding="0" cellspacing="0" border="0">
+                <td><h5>SUBTOTAL:</h5></td>
+                <td style="text-align: right"><h6>${{ data.factura.subtotal|floatformat:2 }}</h6></td>
+            </tr>
+            <tr style="padding: 1px 0;margin: 0" cellpadding="0" cellspacing="0" border="0">
+                <td><h5>DESCUENTO:</h5></td>
+                <td style="text-align: right"><h6>${{ data.factura.valordescuento|floatformat:2 }}</h6></td>
+            </tr>
+            <tr style="padding: 1px 0;margin: 0" cellpadding="0" cellspacing="0" border="0">
+                <td><h5>I.V.A 15%:</h5></td>
+                <td style="text-align: right"><h6>${{ data.factura.valorimpuesto|floatformat:2 }}</h6></td>
+            </tr>
+            <tr style="padding: 3px 0;margin: 0" cellpadding="0" cellspacing="0" border="0">
+                <td><h1>TOTAL:</h1></td>
+                <td style="text-align: right"><h1>${{ data.factura.total|floatformat:2 }}</h1></td>
+            </tr>
+            <tr style="padding: 0;margin: 0" cellpadding="0" cellspacing="0" border="0">
+                <td><h5>EFECTIVO:</h5></td>
+                <td style="text-align: right"><h6>
+                    {% if data.factura.efectivorecibido and data.factura.efectivorecibido != "NaN" and data.factura.efectivorecibido != 'NaN' and data.factura.efectivorecibido != NaN %}
+                        ${{ data.factura.efectivorecibido }}
+                    {% else %}
+                        $0
+                    {% endif %}</h6>
+                </td>
+            </tr>
+            <tr style="padding: 1px 0;margin: 0" cellpadding="0" cellspacing="0" border="0">
+                <td><h5>CAMBIO:</h5></td>
+                <td style="text-align: right"><h6>
+                    {% if data.factura.cambio and data.factura.cambio != "NaN" and data.factura.cambio != 'NaN' and data.factura.cambio != NaN %}
+                        ${{ data.factura.cambio }}
+                    {% else %}
+                        $0
+                    {% endif %}</h6>
+                </td>
+            </tr>
+        </table>
+        <p style="margin: 0px;line-height: 0.2;padding: 0;">-------------------------------------------------------------------------------------------------------------------------------------------------------</p>
+
+
+        <h4 style=" line-height: normal;">CAJERO
+            :{{ data.factura.vendedor.vendedor.nombre_completo|upper }} </h4>
+        <h4 style=" line-height: normal;text-align: center">MUCHAS GRACIAS POR SU COMPRA </h4>
+
+
+    </div>
+
+{% endblock %}
+
+
+
+
+
+
