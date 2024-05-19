@@ -212,23 +212,6 @@ def importar_data_excel():
 
 # CONSULTAS
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-# importar_data_excel()
-
-# CONSULTAS
-
 unidadMedida=UnidadMedida.objects.get(id=11)
 unidadesMedida=UnidadMedida.objects.filter(id=11)
 unidadesMedidas=UnidadMedida.objects.filter(status=True).order_by('unidad')
