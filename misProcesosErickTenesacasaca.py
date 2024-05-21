@@ -234,3 +234,5 @@ listafacturas_listav2=FacturaVenta.objects.values_list('id').filter(status=True)
 facturasdeventa=FacturaVenta.objects.filter(status=True).annotate(es_efectivo=Exists(FacturaVentaFormaPago.objects.filter(status=True)))
 maximo=FacturaVenta.objects.filter(status=True).aggregate(mayor=Max('fechafactura'))['mayor']
 minimo=FacturaVenta.objects.filter(status=True).aggregate(minimo=Min('fechafactura'))['minimo']
+
+
