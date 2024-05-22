@@ -31,6 +31,8 @@ import hashlib
 from app.funciones import convertir_fecha,convertir_fecha_invertida
 from django.db.models import Func, Q, Avg, F,Count, Max, Sum, Exists, OuterRef,Min
 from django.db.models import FloatField
+from django.db.models.functions import Lower
+from django.utils import timezone
 
 def importar_data_csv():
     import os
