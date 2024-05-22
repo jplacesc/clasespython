@@ -30,8 +30,7 @@ from django.core.exceptions import ObjectDoesNotExist
 import hashlib
 from app.funciones import convertir_fecha,convertir_fecha_invertida
 from django.db.models import Func, Q, Avg, F,Count, Max, Sum, Exists, OuterRef,Min
-from django.db.models import
-
+from django.db.models import FloatField
 # CONSULTAS
 
 unidadMedida=UnidadMedida.objects.get(id=1)
