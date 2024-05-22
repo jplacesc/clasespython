@@ -31,6 +31,7 @@ import hashlib
 from app.funciones import convertir_fecha,convertir_fecha_invertida
 from django.db.models import Func, Q, Avg, F,Count, Max, Sum, Exists, OuterRef,Min
 from django.db.models import FloatField
+
 def importar_data_csv():
     import os
     archivo = os.path.join(os.path.join(BASE_DIR, 'files', 'facturas Venta.csv'))
